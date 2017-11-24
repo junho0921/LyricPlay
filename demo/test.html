@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>fx.FlyMsg</title>
+</head>
+<body style="background: lightgray; height: 2000px;">
+
+<div>
+  <input type="text" class="msg" value="测试canvas飞屏">
+  <button class="sendMsg">点击发送飞屏</button>
+</div>
+
+<!--先, 加载依赖的jquery-->
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<!--后, 加载canvas飞屏模块-->
+<script src="../src/fx.flyMsg.js"></script>
+<!--使用示范-->
+<script>
+  // 步骤1(必须): 先创建一个实例
+  var fw = new FlyMsg({
+    // 步骤2(可选): 配置
+    containerCss: {
+      width: 450,
+      height: 300,
+      left: 300,
+      top: 8,
+      zIndex: 3000
+    },
+    msgCss:{
+      width: 328,
+      fontSize: 18,
+      lineHeight: 24,
+      slideInToPosX : -40,
+      slideBackToPosX : 14,
+      imgWidth: 20,
+      imgHeight: 20,
+      imgPadding: 4,
+    },
+    msgAnimation:[
+      {type:'transition', duration: 1000 * 1.3, css:{left:-40, opacity:1}}, // 从左滑入
+      {type:'transition', duration: 1000 * 1.1, css:{left:14}}, // 从左滑入后回滚
+      {type:'wait', duration: 1000 * 3.5}, // 内容的展示时间
+      {type:'transition', duration: 1000 * 1.2, css:{opacity:0}}, // 内容消失
+    ]
+  });
+
+  // 步骤3(可选): 对飞屏实例添加生命周期方法方法
+  function _afterSlideIn (fw) {
+    return function(){
+      if (isNaN(window._queueNum)) {window._queueNum = 0;}
+      setTimeout(function () {
+        fw.flyScreen(
+          "|<http://p3.fx.kgimg.com/v2/fxuserlogo/T1nJKbBKbT1RCvBVdK.jpg_45x45.jpg>|zhusdcet4说:" + window._queueNum + "  一二三四五六七八九十一二三四五六七八九|<http://s10.fxwork.fanxing.kugou.com/fxemotion/21.png?7.0.0>|十一二|<http://s10.fxwork.fanxing.kugou.com/fxemotion/21.png?7.0.0>|三四五六七八九十一二三四五六七八九十",
+          (window._queueNum++) % 4
+        );
+      }, 450);
+    }
+  }
+  fw.afterSlideIn = _afterSlideIn(fw);
+
+  // 步骤4(必须): 绑定事件触发飞屏展示
+  $('.sendMsg').on('click', function () {
+    fw.flyScreen("zhusdcet4说:" + $('.msg').val());
+  });
+</script>
+
+<script>
+  // 步骤5(可选): 页面内可以多创建几个飞屏, 步骤如上
+  var fw2 = new FlyMsg({
+    containerCss: {
+      top: 300,
+      height: 400,
+    },
+    msgAnimation:[
+      {type:'transition', duration: 1000 * 2}, // 从左滑入
+      {type:'transition', duration: 1000 * 0.2}, // 从左滑入后回滚
+      {type:'wait', duration: 1000 * 2.5}, // 内容的展示时间
+      {type:'transition', duration: 1000 * 2}, // 内容消失
+    ]
+  });
+  fw2.afterSlideIn = _afterSlideIn(fw2);
+  $('.sendMsg').on('click', function () {
+    fw2.flyScreen("|<http://p3.fx.kgimg.com/v2/fxuserlogo/T1nJKbBKbT1RCvBVdK.jpg_45x45.jpg>|zhusdcet4说:" + $('.msg').val());
+  });
+</script>
+<script>
+  // 步骤5(可选): 页面内可以多创建几个飞屏, 步骤如上
+  var fw3 = new FlyMsg({
+    containerCss:{ // 飞屏canvas的尺寸与样式设置
+      height: 800,
+      width: 1080,
+      top: 700,
+    },
+    msgCss:{  // 飞屏信息尺寸与样式设置
+      width: 584,
+      fontSize: 60,
+      lineHeight: 80,
+      slideInToPosX : 0, // 飞屏滑入的最左位置
+      slideBackToPosX : 126, // 飞屏滑入后回归的位置
+      imgWidth: 80, // 飞屏图片的尺寸
+      imgHeight: 80, // 飞屏图片的尺寸
+      imgPadding: 8,// 飞屏图片的间距
+    },
+    msgAnimation:[
+      {type:'transition', duration: 1000 * 2}, // 从左滑入
+      {type:'transition', duration: 1000 * 0.2}, // 从左滑入后回滚
+      {type:'wait', duration: 1000 * 1}, // 内容的展示时间
+      {type:'transition', duration: 1000 * 2}, // 内容消失
+    ]
+  });
+  fw3.afterSlideIn = _afterSlideIn(fw3);
+  $('.sendMsg').on('click', function () {
+    fw3.flyScreen("|<http://p3.fx.kgimg.com/v2/fxuserlogo/T1nJKbBKbT1RCvBVdK.jpg_45x45.jpg>|zhusdcet4说:" + $('.msg').val());
+  });
+</script>
+
+</body>
+</html>

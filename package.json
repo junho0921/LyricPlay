@@ -1,0 +1,16 @@
+{
+  "name": "fx.FlyMsg",
+  "version": "1.0.3",
+  "description": "繁星jquery fx.FlyMsg.js \r 安装方法：npm install fx.FlyMsg",
+  "main": "fx.FlyMsg.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "何家俊",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.fanxing.kgidc.cn:fanxing/fesdk.fanxing.com.git"
+  },
+  "readmeFilename": "README.md"
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>LyricPlay</title>
+</head>
+<body style="background: lightgray; height: 2000px;">
+
+<script src="../src/mock.js"></script>
+<!--先, 加载依赖的jquery-->
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<!--后, 加载canvas飞屏模块-->
+<script src="../src/LyricPlay.js"></script>
+<!--使用示范-->
+<script>
+  // 步骤1(必须): 先创建一个实例
+  var fr = +window.location.hash.replace('#', '');
+  console.error(1000/fr);
+  var lp = new LyricPlay({
+    frames: fr
+  });
+
+  lp.render(window.mock);
+
+</script>
+
+</body>
+</html>
