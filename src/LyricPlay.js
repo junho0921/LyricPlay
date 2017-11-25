@@ -109,10 +109,9 @@
     _init: function (config) {
       // 构建记忆缓存
       this.memo = {
-        //todo 补充
-        renderPoint: 0 // 渲染的时间戳
+        initPosition: 0, // 渲染的时间戳
+        initRenderTime: 0, // 渲染的时间戳
       };
-
       // 构建配置
       this.config = $.extend(true, {}, _config, config);
       // 播放歌词的行的索引值
@@ -122,32 +121,6 @@
       this.animationGap = Math.floor(1000 / this.config.frames);
       // 初始化歌曲缓存
       this.song = {rows:{}};
-    },
-
-    /*
-    * 加工数据并缓存
-    * */
-    processData: function (song) {
-      // 记录播放的初始数据, 用于控制播放的精准度
-      this.memo.initPosition = +song.position;
-      this.memo.initRenderTime = Date.now();
-
-      this.song.currentRowIndex = +song.currentRowIndex;
-      this.song.currentWordIndex = +song.currentWordIndex;
-      var rows = this.song.rows;
-      Object.keys(song.rows).forEach(function (songIndex) {
-        if(!isNaN(songIndex) && !rows[songIndex]){
-          var r = rows[songIndex] = {},
-            o = song.rows[songIndex];
-          r.startPoint = +o.startPoint;
-          r.duration = +o.duration;
-          r.content = o.content.map(function (w) {return {
-            startPoint: +w.startPoint,
-            duration: +w.duration,
-            str: w.str
-          };});
-        }
-      });
     },
     // 创建并缓存歌词播放信息的Message实例
     /*
@@ -163,8 +136,15 @@
     * @param song.rows[0].duration [number] 歌句的播放时间
     * */
     render: function (song) {
+      // 记录播放的初始数据, 用于控制播放的精准度
+      this.memo.initPosition = +song.position;
+      this.memo.initRenderTime = Date.now();
+
+      this.song.currentRowIndex = +song.currentRowIndex; // todo currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+      this.song.currentWordIndex = +song.currentWordIndex;
+
       // 加工数据并缓存
-      this.processData(song);
+      processData(song, this);
       // 清理定时器
       this.gapHandler.clear();
       // todo 测试使用
@@ -183,23 +163,7 @@
     getCurrentRow: function(){
       return this.song.rows[this.song.currentRowIndex];
     },
-    /*
-    * 对当前歌句中每字的宽度与相对位置
-    * */
-    calcCurrentRowPos: function () {
-      var
-        _this = this,
-        row = this.getCurrentRow(),
-        sum = 0;
-      if(row.posAry){return false;}
-      row.posAry = [];
-      row.strAry = '';
-      row.content.forEach(function (word, i) {
-        sum += _this._calcWordWidth(word.str);
-        row.posAry[i] = sum;
-        row.strAry += word.str;
-      });
-    },
+
     /*
     * 触发渲染
     * */
@@ -207,7 +171,7 @@
       var row = this.getCurrentRow();
       if(row){
         if(!row.posAry){
-          this.calcCurrentRowPos();
+          calcRowPos(row, this._calcWordWidth.bind(this));
         }
         if(row.posAry){
           this.renderProgress(function () {
@@ -224,7 +188,7 @@
     * 获取当前播放进度的统一方法, 用于控制播放的精准度
     * */
     _getPos: function () {
-      return this.memo.position = Date.now() - this.memo.initRenderTime + this.memo.initPosition;
+      return Date.now() - this.memo.initRenderTime + this.memo.initPosition;
     },
     /*
     * func renderProgress
@@ -416,9 +380,6 @@
      * @param currentWith [number] 当前的进度宽度
      * */
     _drawProgress: function (currentWith) {
-      // 记录位置
-      this.memo.width = currentWith;
-      /*side-effect: 渲染页面*/
       // 调整位置
       this._adjustCanvasPos(currentWith);
       // 渲染长度
