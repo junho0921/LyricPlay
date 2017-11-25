@@ -14,10 +14,12 @@
 <!--使用示范-->
 <script>
   // 步骤1(必须): 先创建一个实例
-  var fr = +window.location.hash.replace('#', '');
+  var fr = +window.location.hash.replace('#', '') ||60;
   console.error(1000/fr);
   var lp = new LyricPlay({
-    frames: fr
+    frames: fr,
+	lyricRows: 7,     // 显示歌词行数
+
   });
 
   lp.render(window.mock);
