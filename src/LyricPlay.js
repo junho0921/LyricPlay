@@ -40,7 +40,6 @@
       handler.apply(this, arg);
     }
   }
-  var rAF =  window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame;
   // 固定配置
   var staticCss = {
     wrap_outer: {
@@ -86,6 +85,7 @@
       shadowColor: '#fff'
     }
   };
+
   /**
    * @class LyricPlay
    * @classdesc 歌词播放模块
@@ -97,6 +97,8 @@
     this._init(config);
     // 创建歌词播放DOM与canvas
     this._renderContainer();
+    // 间隔管理器
+    this.gapHandler = new GapHandler({loopGap: this.animationGap, context: this});
     return this;
   };
 
@@ -108,10 +110,9 @@
       // 构建记忆缓存
       this.memo = {
         //todo 补充
-        timer: null,   // 定时器
-        rAF: 0,        // rAF
         renderPoint: 0 // 渲染的时间戳
       };
+
       // 构建配置
       this.config = $.extend(true, {}, _config, config);
       // 播放歌词的行的索引值
@@ -122,42 +123,7 @@
       // 初始化歌曲缓存
       this.song = {rows:{}};
     },
-    /*
-    * func _loop
-    * @desc 间隔工具, 优先使用浏览器的api：requestAnimationFrame, 往下兼容使用setTimeout
-    * @param callback [function] 间隔回调函数，必须
-    * @param time [number] 间隔时间，配置了就使用浏览器定时器，没有配置就是用rAF
-    * todo 独立为一个模块
-    * */
-    _loop: function (callback, time) {
-      var _this = this;
-      function cb () {
-        var isStop = isNaN(time) && rAF && _this.memo.rAF!==1;
-        _this._clearTimer();
-        if(isStop){
-          return false;
-        }else{
-          callback.apply(_this, []);
-        }
-      }
-      if(time){
-        return this.memo.timer = setTimeout(cb, time);
-      }else{
-        if(rAF){
-          this.memo.rAF = 1;
-          return rAF.apply(window, [cb]);
-        }else{
-          return this.memo.timer = setTimeout(cb, this.animationGap);
-        }
-      }
-    },
-    _clearTimer: function () {
-      this.memo.rAF = 0;
-      if(this.memo.timer){
-        window.clearTimeout(this.memo.timer);
-      }
-      this.memo.timer = null;
-    },
+
     /*
     * 加工数据并缓存
     * */
@@ -200,7 +166,7 @@
       // 加工数据并缓存
       this.processData(song);
       // 清理定时器
-      this._clearTimer();
+      this.gapHandler.clear();
       // todo 测试使用
       this.test = this.test || {};
       this.test.initRowIndex = this.song.currentRowIndex;
@@ -271,22 +237,23 @@
       var currentProgress = this.getProgress();
       // 当获取当前进度是有效长度
       if(!isNaN(currentProgress)){
-        beforeRender && beforeRender.apply(this, []);
+        //beforeRender && beforeRender.apply(this, []);
+        $.isFunction(beforeRender) && beforeRender.apply(this, []);
         // 渲染当前进度
         this._drawProgress(currentProgress);
         // 继续调用间隔工具来渲染
-        return this._loop(this._every);
+        return this.gapHandler.nextGap(this.renderProgress);
       }else{
         var st = currentProgress;// todo 是否可以解耦数据，宽度与状态
         switch (st.status){
           case 'wait':
             console.error('wait', st);
             this._drawProgress(this.getCurrentRow().posAry[this.getCurrentRow().posAry.length-1]);
-            this._loop(this.nextRow, st.wait);
+            this.gapHandler.setTimeout(this.nextRow, st.wait);
             break;
           case 'end':
             console.error('end', this.config.remainTime - st.overGap);
-            this._loop(this.hide, this.config.remainTime - st.overGap);
+            this.gapHandler.setTimeout(this.hide, this.config.remainTime - st.overGap);
             break;
           case 'next':
             console.error('next', st);
@@ -294,20 +261,6 @@
             break;
         }
       }
-    },
-    /*
-    * todo 优化，本方法请合并到_loop
-    * */
-    _every: function () {
-      var renderGap = Date.now() - this.memo.renderPoint;
-      //if(renderGap > 3000){
-      //  alert('比较多了')
-      //}
-      if(renderGap < this.animationGap){
-        // 间距太短
-        return this._loop(this._every);
-      }
-      return this.renderProgress();
     },
     _testAcc: function () {
       // 换行 todo 收到数时, 检查是否有换行的数据
@@ -434,7 +387,7 @@
      * @desc 隐藏画板
      * */
     hide: function () {
-      this._clearTimer();
+      this.gapHandler.clear();
       this.$wrap.hide();
       this._clearRect();
     },
@@ -463,8 +416,6 @@
      * @param currentWith [number] 当前的进度宽度
      * */
     _drawProgress: function (currentWith) {
-      // 渲染的时候记录渲染时间戳, 这个时间戳很重要
-      this.memo.renderPoint = Date.now(); // todo 这个时机处理有问题？解耦吧
       // 记录位置
       this.memo.width = currentWith;
       /*side-effect: 渲染页面*/
