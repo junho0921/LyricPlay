@@ -40,30 +40,9 @@
       handler.apply(this, arg);
     }
   }
-  // 固定配置
-  var staticCss = {
-    wrap_outer: {
-      overflow:'hidden'
-    },
-    wrap_inner: {
-      position: 'relative'
-    },
-    canvas:{
-      position: 'absolute',
-      width: 2000,
-      top: 0,
-      left: 0
-    },
-    className:{
-      wrap: 'LyricPlay_wrap',
-      txt: 'LyricPlay_txt',
-      run: 'LyricPlay_run'
-    }
-  };
-
   /*
-  * LyricPlay的默认配置属性
-  * */
+   * LyricPlay的默认配置属性
+   * */
   var _config = {
     view: 'body',     // 生成歌词播放canvas所在的容器
     lyricRows: 6,     // 显示歌词行数
@@ -85,22 +64,22 @@
       shadowColor: '#fff'
     }
   };
-
   /**
    * @class LyricPlay
    * @classdesc 歌词播放模块
    * @example var fw = new LyricPlay()
    * @param config {Object} 配置: 接受的配置的内容是默认配置对象_config的属性, 请看_config的配置说明
    */
-  var LyricPlay = function (config) {
+  function LyricPlay (config) {
     // 初始化
     this._init(config);
-    // 创建歌词播放DOM与canvas
-    this._renderContainer();
+    // 初始化画板
+    this.canvas = new LyricCanvas(config);
+    console.log('this.canvas', this.canvas);
     // 间隔管理器
-    this.gapHandler = new GapHandler({loopGap: this.animationGap, context: this});
+    this.gapHandler = new GapHandler({loopGap: Math.floor(1000 / this.config.frames), context: this});
     return this;
-  };
+  }
 
   LyricPlay.prototype = {
     // 触发生命周期钩子的工具
@@ -116,9 +95,6 @@
       this.config = $.extend(true, {}, _config, config);
       // 播放歌词的行的索引值
       this.showIndex = Math.round((this.config.lyricRows-1) / 2);
-      console.log('onshowIndex', this.showIndex);
-      // 配置间隔
-      this.animationGap = Math.floor(1000 / this.config.frames);
       // 初始化歌曲缓存
       this.song = {rows:{}};
     },
@@ -147,12 +123,9 @@
       processData(song, this);
       // 清理定时器
       this.gapHandler.clear();
-      // todo 测试使用
-      this.test = this.test || {};
-      this.test.initRowIndex = this.song.currentRowIndex;
-
       if(this.getCurrentRow()){
-        this.test.changRowGap = Date.now();
+        // todo 测试使用
+        this.test_changRowGap = Date.now();
         this.triggerPaint();
       }
     },
@@ -171,14 +144,10 @@
       var row = this.getCurrentRow();
       if(row){
         if(!row.posAry){
-          calcRowPos(row, this._calcWordWidth.bind(this));
+          calcRowPos(row, this.canvas._calcWordWidth.bind(this.canvas));
         }
         if(row.posAry){
-          this.renderProgress(function () {
-            //console.warn('渲染底层');
-            this.$wrap_inner.css('left', 0);
-            this.paintTxt();
-          });
+          this.renderProgress(this.toPaintLyric.bind(this));
         }
       }else{
         this.trigger('onError', ['没有可以渲染的歌词']);
@@ -204,7 +173,7 @@
         //beforeRender && beforeRender.apply(this, []);
         $.isFunction(beforeRender) && beforeRender.apply(this, []);
         // 渲染当前进度
-        this._drawProgress(currentProgress);
+          this.canvas._drawProgress(currentProgress, this.showIndex);
         // 继续调用间隔工具来渲染
         return this.gapHandler.nextGap(this.renderProgress);
       }else{
@@ -212,7 +181,7 @@
         switch (st.status){
           case 'wait':
             console.error('wait', st);
-            this._drawProgress(this.getCurrentRow().posAry[this.getCurrentRow().posAry.length-1]);
+            this.canvas._drawProgress(this.getCurrentRow().posAry[this.getCurrentRow().posAry.length-1], this.showIndex);
             this.gapHandler.setTimeout(this.nextRow, st.wait);
             break;
           case 'end':
@@ -229,8 +198,8 @@
     _testAcc: function () {
       // 换行 todo 收到数时, 检查是否有换行的数据
       var now = Date.now();
-      console.warn('-------test.changRowGap----------', now - this.test.changRowGap);
-      this.test.changRowGap = now;
+      console.warn('-------test_changRowGap----------', now - this.test_changRowGap);
+      this.test_changRowGap = now;
 
       // todo 测试代码, 可以作为精准歌词的参考
       var idealTime = this.getCurrentRow().startPoint - this.memo.initPosition;
@@ -328,12 +297,31 @@
         return row.strAry = row.content.map(function(w){return w.str;}).join('');
       }
     },
-    /**
-     * @func clear
-     * @desc 清屏方法clear, 可以清理当前的歌词播放模块并隐藏起来
-     */
-    clear: function () {
-      this.hide();
+    /*
+     * func toPaintLyric
+     * @desc 渲染歌词方法，有两层歌词重叠作为进度显示的实现基础
+     * */
+    toPaintLyric: function () {
+      // 渲染
+      var index = this.song.currentRowIndex;
+      var r = (this.config.lyricRows-1) / 2;
+      var upIndex = index - Math.round(r);
+      var downIndex = index + Math.floor(r);
+      var rows = this.song.rows;
+      var ary = [];
+      for(var ri = upIndex; ri <= downIndex; ri++){
+        ary.push(this._getTxt(rows[ri]));
+      }
+      this.canvas.paintLyric(ary, this.showIndex);
+    },
+    /*
+     * func hide
+     * @desc 停止播放歌词
+     * */
+    stop: function () {
+      this.gapHandler.clear();
+      this.canvas.clear();
+      //this.resetMemo(); // todo
     },
     /**
      * @func onError
@@ -341,154 +329,6 @@
      * @param errorMsg {String} 报错信息
      */
     onError: null,
-
-
-
-    /*sideEffect*/
-
-    /*
-     * func hide
-     * @desc 隐藏画板
-     * */
-    hide: function () {
-      this.gapHandler.clear();
-      this.$wrap.hide();
-      this._clearRect();
-    },
-    /*
-     * func _calcWordWidth
-     * @desc 获取当前画板的字符宽度
-     * @param word [string] 字符
-     * */
-    _calcWordWidth: function (word) {
-      return this.context_txt.measureText(word).width;
-    },
-    /*
-     * func _adjustCanvasPos
-     * @desc 调整画板的显示位置，当显示进度超过画板可视范围，通过调整画板位置来保证当前进度可视
-     * @param currentWith [number] 当前的进度宽度
-     * */
-    _adjustCanvasPos: function (currentWith) {
-      var overLeft = currentWith + this.config.paddingRight - this.config.css.width;
-      if(overLeft > 0){
-        this.$wrap_inner.css('left', -overLeft);
-      }
-    },
-    /*
-     * func _drawProgress
-     * @desc 渲染进度条方法
-     * @param currentWith [number] 当前的进度宽度
-     * */
-    _drawProgress: function (currentWith) {
-      // 调整位置
-      this._adjustCanvasPos(currentWith);
-      // 渲染长度
-      var lh = this.config.css.lineHeight;
-      try{
-        //console.log('渲染', this.song.rows[this.song.currentRowIndex].content[this.song.currentWordIndex].str);
-      }catch (e){}
-      // todo 优化:应该动态计算当前播放index
-      this.context_run.clearRect(0, lh * this.showIndex, currentWith, lh);
-    },
-    /*
-     * func _clearRect
-     * @desc 清理画板方法
-     * */
-    _clearRect: function () {
-      var h = this.config.css.lineHeight * this.config.lyricRows;
-      this.context_txt.clearRect(0, 0, staticCss.canvas.width, h);
-      this.context_run.clearRect(0, 0, staticCss.canvas.width, h);
-    },
-    /*
-     * func _drawTxt
-     * @desc 渲染歌词方法，有两层歌词重叠作为进度显示的实现基础
-     * @param txt 渲染的歌词文本
-     * @param i 渲染的歌句索引值
-     * */
-    _drawTxt: function (txt, i) {
-      i = i+1;
-      if(!txt){return false;}
-      var lH = this.config.css.lineHeight;
-      var fixH = (lH - this.config.css.fontSize) / 2;
-      this.context_txt.fillText(txt, 0, (lH * i) - fixH);
-      if(i >= this.showIndex+1){
-        this.context_run.fillText(txt, 0, (lH * i) - fixH);
-      }
-    },
-    /*
-     * func paintTxt
-     * @desc 渲染歌词方法，有两层歌词重叠作为进度显示的实现基础
-     * */
-    paintTxt: function () {
-      this._clearRect();
-      var index = this.song.currentRowIndex;
-      var r = (this.config.lyricRows-1) / 2;
-      var upIndex = index - Math.round(r);
-      var downIndex = index + Math.floor(r);
-      var rows = this.song.rows;
-      for(var ri = upIndex; ri <= downIndex; ri++){
-        this._drawTxt(
-          this._getTxt(rows[ri]),
-          ri - upIndex
-        );
-      }
-    },
-    /*
-     * func _renderContainer
-     * @desc 渲染画板
-     * */
-    _renderContainer: function () {
-      // 底层文案的canvas
-      var dom_txt = this._renderCanvas(
-        staticCss.canvas,
-        staticCss.className.txt
-      );
-      this.context_txt = dom_txt[0].getContext('2d');
-      // 顶层文案的canvas
-      var dom_run = this._renderCanvas(
-        staticCss.canvas,
-        staticCss.className.run
-      );
-      this.context_run = dom_run[0].getContext('2d');
-      // 配置画板
-      this.staticConfig();
-    },
-    /*
-     * func staticConfig
-     * @desc 配置画板
-     * */
-    staticConfig: function () {
-      var css = this.config.css;
-      // 设置渲染的透明度
-      this.context_run.globalAlpha = this.context_txt.globalAlpha = css.opacity;
-      // 字体
-      this.context_run.font = this.context_txt.font = css.fontSize + "px "+ css.fontFamily;
-      // 字体颜色
-      this.context_run.fillStyle = css.color;
-      this.context_txt.fillStyle = css.highLightColor;
-      // 阴影
-      this.context_run.shadowOffsetX = this.context_txt.shadowOffsetX = css.shadowOffsetX || 0;
-      this.context_run.shadowOffsetY = this.context_txt.shadowOffsetY = css.shadowOffsetY || 0;
-      this.context_run.shadowBlur = this.context_txt.shadowBlur = css.shadowBlur;
-      this.context_run.shadowColor = css.shadowColor;
-    },
-    /*
-     * func _renderCanvas
-     * @desc 渲染画板
-     * */
-    _renderCanvas: function (canvasCss, className) {
-      var cf = this.config;
-      var h = cf.css.lineHeight*cf.lyricRows;
-      if(!this.$wrap){
-        this.$wrap = $('<div>').css(staticCss.wrap_outer).width(cf.css.width).attr('class', staticCss.className.wrap);
-        this.$wrap_inner = $('<div>').appendTo(this.$wrap).css({position: 'relative', width:staticCss.canvas.width, height: h});
-        $(cf.view).append(this.$wrap);
-      }
-      this.$wrap_inner.append(
-        "<canvas class='"+className+"' height='"+h+"px' width='"+canvasCss.width+"px'></canvas>"
-      );
-      return this.$wrap_inner.find('.'+className).css(canvasCss);
-    },
   };
 
   return LyricPlay;

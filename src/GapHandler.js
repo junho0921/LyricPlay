@@ -11,7 +11,6 @@
 function GapHandler (config){
   // 配置间隔
   this.loopGap = config.loopGap;
-  console.log('loopGap', this.loopGap)
   // callback执行的上下文
   this.context = config.context;
   // 间隔工具记录
@@ -35,7 +34,6 @@ GapHandler.prototype = {
     return this.timer.loop === this.MARK_NONE;
   },
   isInLoopGap: function () {
-    console.warn(this.loopGap, Date.now() - this.timer.loopPoint);
     return (Date.now() - this.timer.loopPoint) < this.loopGap;
   },
   isRunLoopCallback: function () {
