@@ -121,21 +121,21 @@
     * @param song.rows[0].duration [number] 歌句的播放时间
     * */
     render: function (song) {
-      // 记录播放的初始数据, 用于控制播放的精准度
-      this.memo.initPosition = +song.position;
-      this.memo.initRenderTime = Date.now();
-
-      this.song.currentRowIndex = +song.currentRowIndex; // todo currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
-      this.song.currentWordIndex = +song.currentWordIndex;
-
-      // 加工数据并缓存
-      processData(song, this);
-      // 清理定时器
-      this.gapHandler.clear();
-      if(this.getCurrentRow()){
-        // todo 测试使用
-        this.test_changRowGap = Date.now();
-        this.triggerPaint();
+      // 加工数据
+      if(processData(song, this)){
+        // 记录播放的初始数据, 用于控制播放的精准度
+        this.memo.initPosition = +song.position;
+        this.memo.initRenderTime = Date.now();
+        // 标记
+        this.song.currentRowIndex = +song.currentRowIndex; // todo currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+        this.song.currentWordIndex = +song.currentWordIndex;
+        // 清理定时器
+        this.gapHandler.clear();
+        if(this.getCurrentRow()){
+          // todo 测试使用
+          this.test_changRowGap = Date.now();
+          this.triggerPaint();
+        }
       }
     },
     /*

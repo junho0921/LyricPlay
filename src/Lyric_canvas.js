@@ -25,6 +25,8 @@ var staticCss = {
 /*
  * LyricPlay的默认配置属性
  * */
+var defaultHeight = 100;
+var defaultRows = 1;
 var _config = {
   view: 'body',     // 生成歌词播放canvas所在的容器
   lineHeight: 40,
@@ -49,7 +51,8 @@ var _config = {
 function LyricCanvas(config){
   // 构建配置
   this.config = $.extend({}, _config, config);
-  this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || 300;
+  this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
+  this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
   // 创建歌词播放DOM与canvas
   this._renderContainer();
   return this;
@@ -176,6 +179,7 @@ LyricCanvas.prototype = {
   /*
    * 对外API
    * 渲染歌词
+   * todo 是否合理的api
    * */
   paintLyric: function(rows, showIndex){
     this.$wrap_inner.css('left', 0);

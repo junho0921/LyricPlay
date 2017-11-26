@@ -2,20 +2,25 @@
  * Created by Administrator on 2017/11/25.
  */
 function processData (song, _this) {
-  var rows = _this.song.rows;
-  Object.keys(song.rows).forEach(function (songIndex) {
-    if(!isNaN(songIndex) && !rows[songIndex]){
-      var r = rows[songIndex] = {},
-        o = song.rows[songIndex];
-      r.startPoint = +o.startPoint;
-      r.duration = +o.duration;
-      r.content = o.content.map(function (w) {return {
-        startPoint: +w.startPoint,
-        duration: +w.duration,
-        str: w.str
-      };});
-    }
-  });
+  try{
+    var rows = _this.song.rows; // todo 不合理
+    Object.keys(song.rows).forEach(function (songIndex) {
+      if(!isNaN(songIndex) && !rows[songIndex]){
+        var r = rows[songIndex] = {},
+          o = song.rows[songIndex];
+        r.startPoint = +o.startPoint;
+        r.duration = +o.duration;
+        r.content = o.content.map(function (w) {return {
+          startPoint: +w.startPoint,
+          duration: +w.duration,
+          str: w.str
+        };});
+      }
+    });
+    return true;
+  }catch (e){
+    return false;
+  }
 }
 
 /*
