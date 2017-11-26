@@ -43,25 +43,33 @@
   /*
    * LyricPlay的默认配置属性
    * */
+  var canvasConfig = {
+
+  };
   var _config = {
-    view: 'body',     // 生成歌词播放canvas所在的容器
-    lyricRows: 6,     // 显示歌词行数
-    frames: 60,       // 每秒显示的帧数
-    paddingRight: 40, // 歌词显示的最右边距
-    remainTime: 3000, // 歌词播放结束后的保留显示时间
-    css: {            // 歌词播放的样式
-      lineHeight: 40,
-      fontSize: 30,
-      width: 200,
-      opacity: 1,
-      color: '#666',
-      fontFamily: 'Microsoft YaHei',
-      highLightColor: '#0C7',
-      /*阴影*/
-      shadowBlur: 3,
-      shadowOffsetX: 0,
-      shadowOffsetY: 0,
-      shadowColor: '#fff'
+    //canvas: {
+    //  view: 'body',     // 生成歌词播放canvas所在的容器
+    //  rows: 6,         // 显示歌词行数
+    //  height: 300,
+    //  lineHeight: 40,
+    //  fontSize: 30,
+    //  width: 200,
+    //  opacity: 1,
+    //  color: '#666',
+    //  fontFamily: 'Microsoft YaHei',
+    //  highLightColor: '#0C7',
+    //  paddingRight: 40, // 歌词显示的最右边距
+    //  /*阴影*/
+    //  shadowBlur: 3,
+    //  shadowOffsetX: 0,
+    //  shadowOffsetY: 0,
+    //  shadowColor: '#fff'
+    //},
+    play: {
+      // 画板配置
+      // 播放配置
+      frames: 60,       // 每秒显示的帧数
+      remainTime: 3000, // 歌词播放结束后的保留显示时间
     }
   };
   /**
@@ -71,11 +79,10 @@
    * @param config {Object} 配置: 接受的配置的内容是默认配置对象_config的属性, 请看_config的配置说明
    */
   function LyricPlay (config) {
-    // 初始化
-    this._init(config);
     // 初始化画板
-    this.canvas = new LyricCanvas(config);
-    console.log('this.canvas', this.canvas);
+    this.canvas = new LyricCanvas(config.canvas);
+    // 初始化配置
+    this._init(config.play);
     // 间隔管理器
     this.gapHandler = new GapHandler({loopGap: Math.floor(1000 / this.config.frames), context: this});
     return this;
@@ -93,6 +100,8 @@
       };
       // 构建配置
       this.config = $.extend(true, {}, _config, config);
+      console.log('this.canvas', this.canvas);
+      this.config.lyricRows = this.canvas.config.rows;
       // 播放歌词的行的索引值
       this.showIndex = Math.round((this.config.lyricRows-1) / 2);
       // 初始化歌曲缓存

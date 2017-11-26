@@ -27,24 +27,19 @@ var staticCss = {
  * */
 var _config = {
   view: 'body',     // 生成歌词播放canvas所在的容器
-  lyricRows: 6,     // 显示歌词行数
-  frames: 60,       // 每秒显示的帧数
-  paddingRight: 40, // 歌词显示的最右边距
-  remainTime: 3000, // 歌词播放结束后的保留显示时间
-  css: {            // 歌词播放的样式
-    lineHeight: 40,
-    fontSize: 30,
-    width: 200,
-    opacity: 1,
-    color: '#666',
-    fontFamily: 'Microsoft YaHei',
-    highLightColor: '#0C7',
-    /*阴影*/
-    shadowBlur: 3,
-    shadowOffsetX: 0,
-    shadowOffsetY: 0,
-    shadowColor: '#fff'
-  }
+  lineHeight: 40,
+  fontSize: 30,
+  width: 200,
+  opacity: 1,
+  color: '#666',
+  fontFamily: 'Microsoft YaHei',
+  highLightColor: '#0C7',
+  paddingRight: 40, // 歌词显示的最右边距 // todo 考虑这个不是画板配置
+  /*阴影*/
+  shadowBlur: 3,
+  shadowOffsetX: 0,
+  shadowOffsetY: 0,
+  shadowColor: '#fff'
 };
 
 /*
@@ -53,7 +48,8 @@ var _config = {
  * */
 function LyricCanvas(config){
   // 构建配置
-  this.config = $.extend(true, {}, _config, config);
+  this.config = $.extend({}, _config, config);
+  this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || 300;
   // 创建歌词播放DOM与canvas
   this._renderContainer();
   return this;
@@ -81,7 +77,7 @@ LyricCanvas.prototype = {
    * @param currentWith [number] 当前的进度宽度
    * */
   _adjustCanvasPos: function (currentWith) {
-    var overLeft = currentWith + this.config.paddingRight - this.config.css.width;
+    var overLeft = currentWith + this.config.paddingRight - this.config.width;
     if(overLeft > 0){
       this.$wrap_inner.css('left', -overLeft);
     }
@@ -95,7 +91,7 @@ LyricCanvas.prototype = {
     // 调整位置
     this._adjustCanvasPos(currentWith);
     // 渲染长度
-    var lh = this.config.css.lineHeight;
+    var lh = this.config.lineHeight;
     this.context_run.clearRect(0, lh * showIndex, currentWith, lh);
   },
   /*
@@ -103,9 +99,8 @@ LyricCanvas.prototype = {
    * @desc 清理画板方法
    * */
   _clearRect: function () {
-    var h = this.config.css.lineHeight * this.config.lyricRows;
-    this.context_txt.clearRect(0, 0, staticCss.canvas.width, h);
-    this.context_run.clearRect(0, 0, staticCss.canvas.width, h);
+    this.context_txt.clearRect(0, 0, staticCss.canvas.width, this.config.height);
+    this.context_run.clearRect(0, 0, staticCss.canvas.width, this.config.height);
   },
   /*
    * func _drawTxt
@@ -116,8 +111,8 @@ LyricCanvas.prototype = {
   _drawTxt: function (txt, i, showIndex) {
     i = i+1;
     if(!txt){return false;}
-    var lH = this.config.css.lineHeight;
-    var fixH = (lH - this.config.css.fontSize) / 2;
+    var lH = this.config.lineHeight;
+    var fixH = (lH - this.config.fontSize) / 2;
     this.context_txt.fillText(txt, 0, (lH * i) - fixH);
     if(i >= showIndex+1){
       this.context_run.fillText(txt, 0, (lH * i) - fixH);
@@ -148,7 +143,7 @@ LyricCanvas.prototype = {
    * @desc 配置画板
    * */
   staticConfig: function () {
-    var css = this.config.css;
+    var css = this.config;
     // 设置渲染的透明度
     this.context_run.globalAlpha = this.context_txt.globalAlpha = css.opacity;
     // 字体
@@ -168,14 +163,13 @@ LyricCanvas.prototype = {
    * */
   _renderCanvas: function (canvasCss, className) {
     var cf = this.config;
-    var h = cf.css.lineHeight*cf.lyricRows;
     if(!this.$wrap){
-      this.$wrap = $('<div>').css(staticCss.wrap_outer).width(cf.css.width).attr('class', staticCss.className.wrap);
-      this.$wrap_inner = $('<div>').appendTo(this.$wrap).css({position: 'relative', width:staticCss.canvas.width, height: h});
+      this.$wrap = $('<div>').css(staticCss.wrap_outer).width(cf.width).attr('class', staticCss.className.wrap);
+      this.$wrap_inner = $('<div>').appendTo(this.$wrap).css({position: 'relative', width:staticCss.canvas.width, height: cf.height});
       $(cf.view).append(this.$wrap);
     }
     this.$wrap_inner.append(
-      "<canvas class='"+className+"' height='"+h+"px' width='"+canvasCss.width+"px'></canvas>"
+      "<canvas class='"+className+"' height='"+cf.height+"px' width='"+canvasCss.width+"px'></canvas>"
     );
     return this.$wrap_inner.find('.'+className).css(canvasCss);
   },
@@ -189,5 +183,5 @@ LyricCanvas.prototype = {
     for(var i = 0, len = rows.length; i < len; i++){
       this._drawTxt(rows[i], i, showIndex);
     }
-  },
+  }
 };
