@@ -1,5 +1,5 @@
 /**
- * Created by Administrator on 2017/11/26.
+ * Created by jun.ho on 2017/11/26.
  */
 // 固定配置
 var staticCss = {

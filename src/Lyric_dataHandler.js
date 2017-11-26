@@ -1,5 +1,5 @@
 /**
- * Created by Administrator on 2017/11/25.
+ * Created by jun.ho on 2017/11/25.
  */
 function processData (song, _this) {
   try{
@@ -27,14 +27,23 @@ function processData (song, _this) {
  * 对当前歌句中每字的宽度与相对位置
  * */
 function calcRowPos(row, calcHandler) {
-  var sum = 0;
   if(row.posAry){return false;}
+  var sum = 0;
+  // 每字的位置
   row.posAry = [];
+  // 每字的宽度
+  row.withAry = [];
+  // 每句的文案
   row.strAry = '';
+  // 遍历每字获取每字的宽度与位置
   row.content.forEach(function (word, i) {
-    sum += calcHandler(word.str);
+    var width = calcHandler(word.str);
+    sum += width;
     row.posAry[i] = sum;
+    row.withAry[i] = width;
     row.strAry += word.str;
+    // 计算每字的位置
+    word.endPos = word.startPoint + word.duration + row.startPoint;
   });
 }
 
