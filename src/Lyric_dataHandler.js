@@ -27,23 +27,21 @@ function processData (song, _this) {
  * 对当前歌句中每字的宽度与相对位置
  * */
 function calcRowPos(row, calcHandler) {
-  if(row.posAry){return false;}
+  if(!row.content[0] || row.content[0].right){return false;}
   var sum = 0;
-  // 每字的位置
-  row.posAry = [];
-  // 每字的宽度
-  row.withAry = [];
-  // 每句的文案
   row.strAry = '';
   // 遍历每字获取每字的宽度与位置
-  row.content.forEach(function (word, i) {
+  row.content.forEach(function (word) {
     var width = calcHandler(word.str);
     sum += width;
-    row.posAry[i] = sum;
-    row.withAry[i] = width;
-    row.strAry += word.str;
-    // 计算每字的位置
+    // 每字的位置
+    word.right = sum;
+    // 每字的宽度
+    word.width = width;
+    // 计算每字的最后播放时间戳
     word.endPos = word.startPoint + word.duration + row.startPoint;
+    // 每句的文案
+    row.strAry += word.str;
   });
 }
 

@@ -94,7 +94,7 @@
       // 获取歌词行数
       this.config.lyricRows = this.canvas.config.rows;
       // 播放歌词的行的索引值
-      this.showIndex = Math.round((this.config.lyricRows-1) / 2);
+      this.runningIndex = Math.round((this.config.lyricRows-1) / 2);
       // 初始化歌曲缓存
       this.song = {rows:{}};
     },
@@ -125,8 +125,8 @@
         // todo 测试使用
         this.test_changRowGap = Date.now();
         //if(this.getCurrentRow()){
-        // 无论有没有当前的歌句都显示，查找的任务交给计算方法
-          this.triggerPaint();
+          // 无论有没有当前的歌句都显示，查找的任务交给计算方法
+          this.splitFlow();
         //}
       }
     },
@@ -136,17 +136,6 @@
     * */
     getCurrentRow: function(){
       return this.song.rows[this.memo.currentRowIndex];
-    },
-    /*
-    * 触发渲染
-    * */
-    triggerPaint: function () {
-      var row = this.getCurrentRow();
-      if(row){
-        this.renderProgress(this.toPaintLyric.bind(this)); // todo 不知道如何优化
-      }else{
-        this.trigger('onError', ['没有可以渲染的歌词']);
-      }
     },
     /*
     * 获取当前播放进度的统一方法, 用于控制播放的精准度
@@ -160,46 +149,12 @@
     *     间隔callback的内容是获取当前的进度去渲染
     * @param beforeRender  [function] 渲染前的回调函数 todo 优化为判断来执行
     * */
-    renderProgress_past: function (beforeRender) {
-      // 获取当前的进度 todo 思考是否可以优化缓存，避免太多计算
-      var currentProgress = this.getProgress();
-      // 当获取当前进度是有效长度
-      if(!isNaN(currentProgress)){
-        //beforeRender && beforeRender.apply(this, []);
-        $.isFunction(beforeRender) && beforeRender.apply(this, []);
-        // 渲染当前进度
-          this.canvas._drawProgress(currentProgress, this.showIndex);
-        // 继续调用间隔工具来渲染
-        return this.gapHandler.nextGap(this.renderProgress);
-      }else{
-        var st = currentProgress;// todo 是否可以解耦数据，宽度与状态
-        switch (st.status){
-          case 'wait':
-            console.error('wait', st);
-            this.canvas._drawProgress(this.getCurrentRow().posAry[this.getCurrentRow().posAry.length-1], this.showIndex);
-            this.gapHandler.setTimeout(this.nextRow, st.wait);
-            break;
-          case 'end':
-            console.error('end', this.config.remainTime - st.overGap);
-            this.gapHandler.setTimeout(this.hide, this.config.remainTime - st.overGap);
-            break;
-          case 'next':
-            console.error('next', st);
-            return this.nextRow();
-            break;
-        }
-      }
-    },
-    renderProgress: function () {
-      return this.splitFlow();
-    },
     splitFlow: function () {
       var st = this.getProgress();
-      //console.error('status -> ', st);
+      st.status !== 'running' && console.log('status -> ', st);
       switch (st.status){
         case 'running':
-          console.error('status -> ', st);
-          this.canvas._drawProgress(st.width, this.showIndex);
+          this.paint(st.width);
           return this.gapHandler.nextGap(this.splitFlow);
           break;
         case 'nextWord':
@@ -207,17 +162,21 @@
           return this.splitFlow();
           break;
         case 'waitNext':
-          var posAry = this.getCurrentRow().posAry;
-          this.canvas._drawProgress(posAry[posAry.length-1], this.showIndex);
-          this.memo.currentRowIndex++;
-          this.memo.currentWordIndex = 0;
-          return this.gapHandler.setTimeout(this.splitFlow, st.wait);
+          var row = this.getCurrentRow();
+          this.paint(row.content[this.memo.currentWordIndex].right);
+          return this.gapHandler.setTimeout(function () {
+            this._testAcc();// 测试
+            this.memo.currentRowIndex++;
+            this.memo.currentWordIndex = 0;
+            this._resetOnShowLyric();
+            return this.splitFlow();
+          }, st.wait);
           break;
         case 'nextRow':
-          // 测试
-          this._testAcc();
+          this._testAcc();// 测试
           this.memo.currentRowIndex++;
           this.memo.currentWordIndex = 0;
+          this._resetOnShowLyric();
           return this.splitFlow();
           break;
         case 'end':
@@ -230,6 +189,7 @@
         case 'preRow':
           this.memo.currentRowIndex--;
           this.memo.currentWordIndex = 0; // todo 等于零还是最后索引值好
+          this._resetOnShowLyric();
           return this.splitFlow();
           break;
         case 'preWait':// 最开始的等待或者每句开始前的等待
@@ -252,28 +212,6 @@
       console.log('相差', truthTime - idealTime);
     },
     /*
-    * func nextRow
-    * @desc 换行方法
-    * */
-    nextRow: function () {
-      // 调整状态
-      this.memo.currentRowIndex++;
-      this.memo.currentWordIndex = 0;
-      // 重新渲染run长度为零
-      var row = this.getCurrentRow();
-      // 测试
-      this._testAcc();
-
-      if(row){
-        this.triggerPaint();
-      }else{
-        this.triggerEnd(); // todo 终止方法需要剩余的显示时间， 请确认
-      }
-    },
-    triggerEnd: function () {
-      console.error('end');
-    },
-    /*
     * func getProgress
     * @desc 获取当前进度长度
     * 优化，因为是一个比较频繁调用的方法，所以要注意
@@ -286,42 +224,22 @@
         memo = this.memo,
         onShowWord = row.content[memo.currentWordIndex],
         wordRemainTime = onShowWord.endPos - this._getPos();
-      //if(){          // 1，当前字符范围
-      //}else if(){    // 超出当前字符
-      //  if(){        // 当前歌句的范围
-      //    if(){      // 2，下一个字
-      //    }else{     // 3，当前歌句的完结后的静默时间
-      //    }
-      //  }else{       // 超出当前歌句的范围
-      //    if(){      // 4，下一句歌词
-      //    }else{     // 5，终结
-      //    }
-      //  }
-      //}else if(){    // 低于当前字符
-      //  if(){        // 6，当前歌句的范围，上一个字符
-      //  }else{       // 超出当前歌句的范围
-      //    if(){      // 7，上一句歌词
-      //    }else{     // 8，开始的等候时间
-      //    }
-      //  }
-      //}
       if(wordRemainTime > 0){
-        if(wordRemainTime > onShowWord.duration){
-          if(this.memo.currentWordIndex === 0){
+        if(wordRemainTime <= onShowWord.duration){
+          return {status: 'running', width: onShowWord.right - (wordRemainTime / onShowWord.duration * onShowWord.width)};
+        }else{
+          if(this.memo.currentWordIndex > 0){
+            return {status: 'preWord'};
+          }else{
             if(row.content[memo.currentRowIndex-1]){
               return {status: 'preRow'};
             }else{
               return {status: 'preWait', wait: wordRemainTime - onShowWord.duration};
             }
-          }else{
-            return {status: 'preWord'};
           }
-        }else{
-          var onShowWordWith = row.withAry[memo.currentWordIndex];
-          return {status: 'running', width: row.posAry[memo.currentWordIndex] - (wordRemainTime / onShowWord.duration * onShowWordWith)};
         }
       }else{
-        if(row.content[memo.currentWordIndex+1]){
+        if(memo.currentWordIndex < (row.content.length - 1)){
           return {status: 'nextWord'};
         }else{
           var nextRow = this.song.rows[this.memo.currentRowIndex+1];
@@ -340,38 +258,6 @@
       }
     },
     /*
-    * @param gap = 总的耗费时间 - 当前本行结尾时间
-    * */
-    calcWaitTime: function (rowOverGap) { // 命名为rowOverGap
-      var
-        song = this.song,
-        nextRow = song.rows[this.memo.currentRowIndex+1];
-      if(nextRow){
-        var
-          currentRow = this.getCurrentRow(),
-          rowWaitGap = nextRow.startPoint - (currentRow.startPoint + currentRow.duration);
-        if(rowWaitGap < 0){
-          return this.trigger('special', ['合唱歌词']);
-        }
-        if(rowWaitGap > rowOverGap){
-          return {
-            status: 'wait',
-            wait: rowWaitGap - rowOverGap
-          }
-        }else{
-          return {
-            status: 'next',
-            overGap: rowOverGap - rowWaitGap
-          };
-        }
-      }else{
-        return {
-          status: 'end',
-          overGap: rowOverGap
-        };
-      }
-    },
-    /*
     * 获取指定歌句的文案 todo 考虑优化
     * */
     _getTxt: function (row) {
@@ -382,24 +268,35 @@
         return row.strAry = row.content.map(function(w){return w.str;}).join('');
       }
     },
-    /*
-     * func toPaintLyric
-     * @desc 渲染歌词方法，有两层歌词重叠作为进度显示的实现基础
-     * */
-    toPaintLyric: function () {
-      return this.canvas.paintLyric(this._getPaintLyric(), this.showIndex);
+    paint: function (width) {
+      // 调用画板渲染, 传参渲染的歌词与索引值
+      this.canvas.draw(this._getPaintLyric(), this.runningIndex, width);
     },
+    /*
+     * func _getPaintLyric
+     * @desc 获取歌词方法, 优先使用缓存, 没有就计算出来
+     * */
     _getPaintLyric: function () {
-      // 渲染
-      var index = this.memo.currentRowIndex;
-      var upIndex = index - this.showIndex;
-      var downIndex = index + this.showIndex -1;
-      var rows = this.song.rows;
-      var ary = [];
-      for(var ri = upIndex; ri <= downIndex; ri++){
-        ary.push(this._getTxt(rows[ri]));
+      var memo = this.memo;
+      if(memo.lyricStr && memo.lyricStr.index === memo.currentRowIndex){
+        return memo.lyricStr;
+      }else{
+        // 渲染
+        var index = memo.currentRowIndex;
+        var upIndex = index - this.runningIndex;
+        var downIndex = index + this.runningIndex -1;
+        var rows = this.song.rows;
+        var ary = [];
+        for(var ri = upIndex; ri <= downIndex; ri++){
+          ary.push(this._getTxt(rows[ri]));
+        }
+        ary.index = index;
+        memo.lyricStr = ary;
+        return ary;
       }
-      return ary;
+    },
+    _resetOnShowLyric: function () {
+      this.memo.lyricStr = null;
     },
     /*
      * func hide

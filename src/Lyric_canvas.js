@@ -46,13 +46,15 @@ var _config = {
 
 /*
  * 歌词画板方法，与song数据结构无关，只关心渲染的字符与进度条宽度
- * todo 优化this.showIndex
+ * todo 优化this.runningIndex
  * */
 function LyricCanvas(config){
   // 构建配置
   this.config = $.extend({}, _config, config);
   this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
   this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
+  // 创建缓存
+  this.memo = {};
   // 创建歌词播放DOM与canvas
   this._renderContainer();
   return this;
@@ -86,16 +88,18 @@ LyricCanvas.prototype = {
     }
   },
   /*
-   * func _drawProgress
+   * func draw
    * @desc 渲染进度条方法
    * @param currentWith [number] 当前的进度宽度
    * */
-  _drawProgress: function (currentWith, showIndex) {
+  draw: function (lyrics, runningIndex, currentWith) {
+    // 渲染歌词文案
+    this.paintLyric(lyrics, runningIndex);
     // 调整位置
     this._adjustCanvasPos(currentWith);
     // 渲染长度
     var lh = this.config.lineHeight;
-    this.context_run.clearRect(0, lh * showIndex, currentWith, lh);
+    this.context_run.clearRect(0, lh * runningIndex, currentWith, lh);
   },
   /*
    * func _clearRect
@@ -111,13 +115,13 @@ LyricCanvas.prototype = {
    * @param txt 渲染的歌词文本
    * @param i 渲染的歌句索引值
    * */
-  _drawTxt: function (txt, i, showIndex) {
+  _drawTxt: function (txt, i, runningIndex) {
     i = i+1;
     if(!txt){return false;}
     var lH = this.config.lineHeight;
     var fixH = (lH - this.config.fontSize) / 2;
     this.context_txt.fillText(txt, 0, (lH * i) - fixH);
-    if(i >= showIndex+1){
+    if(i >= runningIndex+1){
       this.context_run.fillText(txt, 0, (lH * i) - fixH);
     }
   },
@@ -179,13 +183,16 @@ LyricCanvas.prototype = {
   /*
    * 对外API
    * 渲染歌词
-   * todo 是否合理的api
    * */
-  paintLyric: function(rows, showIndex){
+  paintLyric: function(lyrics, runningIndex){
+    if(this.memo.lyrics === lyrics) {
+      return false;
+    }
     this.$wrap_inner.css('left', 0);
     this._clearRect();
-    for(var i = 0, len = rows.length; i < len; i++){
-      this._drawTxt(rows[i], i, showIndex);
+    for(var i = 0, len = lyrics.length; i < len; i++){
+      this._drawTxt(lyrics[i], i, runningIndex);
     }
+    this.memo.lyrics = lyrics;
   }
 };
