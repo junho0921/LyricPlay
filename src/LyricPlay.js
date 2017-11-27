@@ -160,13 +160,12 @@
           return this.splitFlow();
           break;
         case 'waitNext':
-          var row = this.getCurrentRow();
-          this.paint(row.content[this.memo.currentWordIndex].right);
+          this.memo.currentRowIndex++;
+          this.memo.currentWordIndex = 0;
+          this._resetOnShowLyric();
+          this.paint(0);
           return this.gapHandler.setTimeout(function () {
-            this.memo.currentRowIndex++;
-            this.memo.currentWordIndex = 0;
             this._testAcc();// 测试
-            this._resetOnShowLyric();
             return this.splitFlow();
           }, st.wait);
           break;
@@ -186,23 +185,24 @@
           break;
         case 'preRow':
           this.memo.currentRowIndex--;
-          this.memo.currentWordIndex = 0; // todo 等于零还是最后索引值好
+          this.memo.currentWordIndex = 0; // 修正当前歌字的索引值为0
           this._resetOnShowLyric();
           return this.splitFlow();
           break;
         case 'preWait':// 最开始的等待或者每句开始前的等待
         case 'waitBeginning':// 最开始的等待或者每句开始前的等待
+          this.paint(0);
           return this.gapHandler.setTimeout(this.splitFlow, st.wait);
           break;
       }
     },
+    /*
+    * 测试代码, 可以作为精准歌词的参考, 请在换行并修正当前的索引值后使用
+    * */
     _testAcc: function () {
-      // 换行 todo 收到数时, 检查是否有换行的数据
       var now = Date.now();
       console.warn('-------test_changRowGap----------', now - this.test_changRowGap);
       this.test_changRowGap = now;
-
-      // todo 测试代码, 可以作为精准歌词的参考
       var idealTime = this.getCurrentRow().startPoint - this.memo.initPosition;
       var truthTime = now - this.memo.initRenderTime;
       console.log('理论的本行与初始的间距', idealTime);
@@ -261,7 +261,7 @@
       }
     },
     /*
-    * 获取指定歌句的文案 todo 考虑优化
+    * 获取指定歌句的文案
     * */
     _getTxt: function (row) {
       if(!row){return null;}
