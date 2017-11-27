@@ -27,7 +27,8 @@ function processData (song, _this) {
  * 对当前歌句中每字的宽度与相对位置
  * */
 function calcRowPos(row, calcHandler) {
-  if(!row.content[0] || row.content[0].right){return false;}
+  if(!row || !row.content[0] || row.content[0].right){return false;}
+
   var sum = 0;
   row.strAry = '';
   // 遍历每字获取每字的宽度与位置

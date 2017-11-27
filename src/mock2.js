@@ -1,4 +1,4 @@
-var s = {
+window.mock = {
     "position":100420,
     "name":"难得",
     "rows":{

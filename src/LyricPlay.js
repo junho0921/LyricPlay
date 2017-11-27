@@ -90,7 +90,7 @@
       // 构建记忆缓存
       this.resetMemo();
       // 构建配置
-      this.config = $.extend(true, {}, _config, config);
+      this.config = $.extend(true, {}, _config.play, config);
       // 获取歌词行数
       this.config.lyricRows = this.canvas.config.rows;
       // 播放歌词的行的索引值
@@ -124,10 +124,8 @@
         this.gapHandler.clear();
         // todo 测试使用
         this.test_changRowGap = Date.now();
-        //if(this.getCurrentRow()){
-          // 无论有没有当前的歌句都显示，查找的任务交给计算方法
-          this.splitFlow();
-        //}
+        // 无论有没有当前的歌句都显示，查找的任务交给计算方法
+        this.splitFlow();
       }
     },
     /*
@@ -165,17 +163,17 @@
           var row = this.getCurrentRow();
           this.paint(row.content[this.memo.currentWordIndex].right);
           return this.gapHandler.setTimeout(function () {
-            this._testAcc();// 测试
             this.memo.currentRowIndex++;
             this.memo.currentWordIndex = 0;
+            this._testAcc();// 测试
             this._resetOnShowLyric();
             return this.splitFlow();
           }, st.wait);
           break;
         case 'nextRow':
-          this._testAcc();// 测试
           this.memo.currentRowIndex++;
           this.memo.currentWordIndex = 0;
+          this._testAcc();// 测试
           this._resetOnShowLyric();
           return this.splitFlow();
           break;
@@ -218,6 +216,7 @@
     * */
     getProgress: function () {
       var row = this.getCurrentRow();
+      if(!row){return false;}
       // 计算每句的数据
       calcRowPos(row, this.canvas._calcWordWidth.bind(this.canvas));
       var
@@ -231,7 +230,7 @@
           if(this.memo.currentWordIndex > 0){
             return {status: 'preWord'};
           }else{
-            if(row.content[memo.currentRowIndex-1]){
+            if(this.song.rows[memo.currentRowIndex-1]){
               return {status: 'preRow'};
             }else{
               return {status: 'preWait', wait: wordRemainTime - onShowWord.duration};
@@ -245,7 +244,11 @@
           var nextRow = this.song.rows[this.memo.currentRowIndex+1];
           var rowOverGap = -wordRemainTime;
           if(nextRow){
-            var rowWaitGap = nextRow.startPoint - (row.startPoint + row.duration); //if(rowWaitGap < 0){return this.trigger('special', ['合唱歌词']);}
+            var rowWaitGap = nextRow.startPoint - (row.startPoint + row.duration);
+            // if(rowWaitGap < 0){
+            //   console.error('合唱歌词', rowWaitGap);
+            //   return this.trigger('special', ['合唱歌词']);
+            // }
             if(rowWaitGap > rowOverGap){
               return {status: 'waitNext', wait: rowWaitGap - rowOverGap}
             }else{
