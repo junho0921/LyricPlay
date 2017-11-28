@@ -92,9 +92,9 @@ LyricCanvas.prototype = {
    * @desc 渲染进度条方法
    * @param currentWith [number] 当前的进度宽度
    * */
-  draw: function (lyrics, runningIndex, currentWith) {
+  draw: function (lyrics, runningIndex, currentWith, isRepaint) {
     // 渲染歌词文案
-    this.paintLyric(lyrics, runningIndex);
+    this.paintLyric(lyrics, runningIndex, isRepaint);
     // 调整位置
     this._adjustCanvasPos(currentWith);
     // 渲染长度
@@ -184,8 +184,8 @@ LyricCanvas.prototype = {
    * 对外API
    * 渲染歌词
    * */
-  paintLyric: function(lyrics, runningIndex){
-    if(this.memo.lyrics === lyrics) {
+  paintLyric: function(lyrics, runningIndex, isRepaint){
+    if(this.memo.lyrics === lyrics && !isRepaint) {
       return false;
     }
     this.$wrap_inner.css('left', 0);

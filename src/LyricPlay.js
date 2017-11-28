@@ -120,13 +120,22 @@
         // 标记（当前句与字的索引值只是提供方便计算）
         this.memo.currentRowIndex = +song.currentRowIndex || Object.keys(song.rows)[0] || 0; // todo currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
         this.memo.currentWordIndex = +song.currentWordIndex || 0;
-        // 清理定时器
-        this.gapHandler.clear();
-        // todo 测试使用
-        this.test_changRowGap = Date.now();
+        // 重置
+        this._reset();
         // 无论有没有当前的歌句都显示，查找的任务交给计算方法
         this.splitFlow();
       }
+    },
+    _reset: function () {
+      // 清理定时器
+      this.gapHandler.clear();
+      // 重置歌词缓存
+      this._resetOnShowLyric();
+      // 标记重新渲染
+      this.isRepaint = true;
+      // todo 测试使用
+      this.test_changRowGap = Date.now();
+
     },
     /*
     * 获取当前的歌句
@@ -273,7 +282,8 @@
     },
     paint: function (width) {
       // 调用画板渲染, 传参渲染的歌词与索引值
-      this.canvas.draw(this._getPaintLyric(), this.runningIndex, width);
+      this.canvas.draw(this._getPaintLyric(), this.runningIndex, width, this.isRepaint);
+      this.isRepaint = false;
     },
     /*
      * func _getPaintLyric
