@@ -3,7 +3,12 @@
  */
 function processData (song, _this) {
   try{
-    var rows = _this.song.rows; // todo 不合理
+    var rows;
+    if(_this.song.name !== song.name){
+      rows = {};
+    }else{
+      rows = _this.song.rows;
+    }
     Object.keys(song.rows).forEach(function (songIndex) {
       if(!isNaN(songIndex) && !rows[songIndex]){
         var r = rows[songIndex] = {},
@@ -17,6 +22,8 @@ function processData (song, _this) {
         };});
       }
     });
+    _this.song.rows = rows;
+    _this.song.name = song.name;
     return true;
   }catch (e){
     return false;

@@ -33,16 +33,22 @@ GapHandler.prototype = {
   isNoLoop: function () {
     return this.timer.loop === this.MARK_NONE;
   },
+  hasLoopCallback: function () {
+    return window.$.isFunction(this.loopCallback);
+  },
   isInLoopGap: function () {
     return (Date.now() - this.timer.loopPoint) < this.loopGap;
   },
-  isRunLoopCallback: function () {
-    return this.timer.loop !== this.MARK_LOOP;
+  isRunCallback: function (callback) {
+    return callback && !callback.isStop;
   },
   loopByRAF: function (callback) {
-    if(!this.isNoLoop()){return false;}
-    // 记录
-    this.timer.loop = this.MARK_LOOP;
+    if(this.hasLoopCallback()){return false;}
+    return this._loopByRAF_repeat(callback);
+  },
+  _loopByRAF_repeat: function (callback) {
+    // 缓存callback
+    this.loopCallback = callback;
     return this.rAF.apply(window, [this.loopCB_rAF(callback)]);
   },
   loopByTimeout: function (callback) {
@@ -57,25 +63,27 @@ GapHandler.prototype = {
       return cb.apply(_this.context, []);
     }
   },
-  loopCB_rAF: function (cb) {
+  loopCB_rAF: function (callback) {
     var _this = this;
     return function () {
-      var isStop = _this.isRunLoopCallback();
       // 清理标记
-      _this.timer.loop = _this.MARK_NONE;
+      var isStop = !_this.isRunCallback(callback);
       if (isStop) {
+        console.error('终止了');
+        callback.isStop = false;
         return false;
       } else {
         if (_this.isInLoopGap()) {
           // 间距太短
-          return _this.loopByRAF(cb);
+          return _this._loopByRAF_repeat(callback);
         }else{
           var now = Date.now();
           _this.timer.loopPoint = now;
-          return cb.apply(_this.context, [now]);
+          _this.loopCallback = null;
+          return callback.apply(_this.context, [now]);
         }
       }
-    }
+    };
   },
   setTimeout: function (callback, time, context) {
     context = context || this.context;
@@ -96,12 +104,16 @@ GapHandler.prototype = {
    * 外部主动关闭loop的方法
    * */
   clearLoop: function () {
-    // 标记loop为null用于阻止rAF
-    this.timer.loop = this.MARK_NONE;
     // 清理定时器
     if(!this.rAF && this.timer.loop){
       window.clearTimeout(this.timer.loop);
     }
+    if(this.hasLoopCallback()){
+      this.loopCallback.isStop = true;
+    }
+    this.loopCallback = null;
+    // 标记loop为null用于阻止rAF
+    this.timer.loop = this.MARK_NONE;
   },
   /*
    * 外部主动关闭所有间隔工具方法

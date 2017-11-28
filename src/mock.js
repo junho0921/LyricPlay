@@ -1,8 +1,8 @@
 
 window.mock = {
-  "position":35924+3961+2,
+  "position":35924+100,
   "name":"光辉岁月",
-  "currentRowIndex":4,
+  "currentRowIndex":2,
   "currentWordIndex":0,
   "rows":{
     "2":{

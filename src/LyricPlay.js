@@ -42,24 +42,24 @@
    * */
   var _config = {
     // 画板配置
-    //canvas: {
-    //  view: 'body',     // 生成歌词播放canvas所在的容器
-    //  rows: 6,         // 显示歌词行数
-    //  height: 300,
-    //  lineHeight: 40,
-    //  fontSize: 30,
-    //  width: 200,
-    //  opacity: 1,
-    //  color: '#666',
-    //  fontFamily: 'Microsoft YaHei',
-    //  highLightColor: '#0C7',
-    //  paddingRight: 40, // 歌词显示的最右边距
-    //  /*阴影*/
-    //  shadowBlur: 3,
-    //  shadowOffsetX: 0,
-    //  shadowOffsetY: 0,
-    //  shadowColor: '#fff'
-    //},
+    canvas: {
+     view: 'body',     // 生成歌词播放canvas所在的容器
+     rows: 6,         // 显示歌词行数
+     height: 300,
+     lineHeight: 40,
+     fontSize: 30,
+     width: 200,
+     opacity: 1,
+     color: '#666',
+     fontFamily: 'Microsoft YaHei',
+     highLightColor: '#0C7',
+     paddingRight: 40, // 歌词显示的最右边距
+     /*阴影*/
+     shadowBlur: 3,
+     shadowOffsetX: 0,
+     shadowOffsetY: 0,
+     shadowColor: '#fff'
+    },
     // 播放配置
     play: {
       frames: 60,       // 每秒显示的帧数
@@ -96,7 +96,7 @@
       // 播放歌词的行的索引值
       this.runningIndex = Math.round((this.config.lyricRows-1) / 2);
       // 初始化歌曲缓存
-      this.song = {rows:{}};
+      this.song = {rows:{}, name:null};
     },
     // 创建并缓存歌词播放信息的Message实例
     /*

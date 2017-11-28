@@ -1,5 +1,5 @@
-window.mock = {
-    "position":100420,
+window.mock2 = {
+    "position":47590+200,
     "name":"难得",
     "rows":{
         "2":{
