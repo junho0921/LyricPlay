@@ -54,7 +54,7 @@ function LyricCanvas(config){
   this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
   this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
   // 创建缓存
-  this.memo = {};
+  this.memo = {runningIndex:0, currentWith:0, lyrics:[]};
   // 创建歌词播放DOM与canvas
   this._renderContainer();
   return this;
@@ -92,14 +92,36 @@ LyricCanvas.prototype = {
    * @desc 渲染进度条方法
    * @param currentWith [number] 当前的进度宽度
    * */
-  draw: function (lyrics, runningIndex, currentWith, isRepaint) {
-    // 渲染歌词文案
-    this.paintLyric(lyrics, runningIndex, isRepaint);
-    // 调整位置
+  draw: function (lyrics, runningIndex, currentWith) {
+    if(this.isNeedRePaint(lyrics, runningIndex, currentWith)){
+      // 渲染歌词文案
+      this.paintLyric(lyrics, runningIndex);
+    }
+    // 渲染歌词播放进度
+    this.paintProgress(runningIndex, currentWith);
+  },
+  /*
+   * func paintProgress
+   * 渲染歌词播发进度方法
+   * */
+  paintProgress: function (runningIndex, currentWith) {
+    // 调整位置, 让当前进度可以出现在可视范围
     this._adjustCanvasPos(currentWith);
     // 渲染长度
     var lh = this.config.lineHeight;
     this.context_run.clearRect(0, lh * runningIndex, currentWith, lh);
+    // 存储已经渲染的状态
+    this.memo.currentWith = currentWith;
+  },
+  /*
+   * func isNeedRePaint
+   * 判断是否需要重新渲染
+   * */
+  isNeedRePaint: function (lyrics, runningIndex, currentWith) {
+    var changeIndex = this.memo.runningIndex !== runningIndex;
+    var changeProgress = this.memo.currentWith > currentWith;
+    var changeLyrics = this.memo.lyrics !== lyrics;
+    return changeLyrics || changeProgress || changeIndex;
   },
   /*
    * func _clearRect
@@ -181,18 +203,16 @@ LyricCanvas.prototype = {
     return this.$wrap_inner.find('.'+className).css(canvasCss);
   },
   /*
-   * 对外API
    * 渲染歌词
    * */
-  paintLyric: function(lyrics, runningIndex, isRepaint){
-    if(this.memo.lyrics === lyrics && !isRepaint) {
-      return false;
-    }
+  paintLyric: function(lyrics, runningIndex){
     this.$wrap_inner.css('left', 0);
     this._clearRect();
     for(var i = 0, len = lyrics.length; i < len; i++){
       this._drawTxt(lyrics[i], i, runningIndex);
     }
+    // 存储已经渲染的状态
+    this.memo.runningIndex = runningIndex;
     this.memo.lyrics = lyrics;
   }
 };

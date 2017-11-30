@@ -129,13 +129,8 @@
     _reset: function () {
       // 清理定时器
       this.gapHandler.clear();
-      // 重置歌词缓存
-      this._resetOnShowLyric();
-      // 标记重新渲染
-      this.isRepaint = true;
       // todo 测试使用
       this.test_changRowGap = Date.now();
-
     },
     /*
     * 获取当前的歌句
@@ -282,8 +277,7 @@
     },
     paint: function (width) {
       // 调用画板渲染, 传参渲染的歌词与索引值
-      this.canvas.draw(this._getPaintLyric(), this.runningIndex, width, this.isRepaint);
-      this.isRepaint = false;
+      this.canvas.draw(this._getPaintLyric(), this.runningIndex, width);
     },
     /*
      * func _getPaintLyric
@@ -291,7 +285,10 @@
      * */
     _getPaintLyric: function () {
       var memo = this.memo;
-      if(memo.lyricStr && memo.lyricStr.index === memo.currentRowIndex){
+      var changeSong = !memo.lyricStr || memo.lyricStr.name !== this.song.name;
+      // 由于memo.currentRowIndex已经是最新状态, 用于判断歌词缓存是否最新
+      var changeIndex = !memo.lyricStr || memo.lyricStr.index !== memo.currentRowIndex;
+      if(!changeSong || !changeIndex){
         return memo.lyricStr;
       }else{
         // 渲染
@@ -304,6 +301,8 @@
           ary.push(this._getTxt(rows[ri]));
         }
         ary.index = index;
+        ary.name = this.song.name;
+        // 记录已经渲染的状态
         memo.lyricStr = ary;
         return ary;
       }
