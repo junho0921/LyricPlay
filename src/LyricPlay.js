@@ -285,10 +285,10 @@
      * */
     _getPaintLyric: function () {
       var memo = this.memo;
-      var changeSong = !memo.lyricStr || memo.lyricStr.name !== this.song.name;
+      var notChangeSong = memo.lyricStr && memo.lyricStr.name === this.song.name;
       // 由于memo.currentRowIndex已经是最新状态, 用于判断歌词缓存是否最新
-      var changeIndex = !memo.lyricStr || memo.lyricStr.index !== memo.currentRowIndex;
-      if(!changeSong || !changeIndex){
+      var notChangeIndex = memo.lyricStr && memo.lyricStr.index === memo.currentRowIndex;
+      if(notChangeSong && notChangeIndex){
         return memo.lyricStr;
       }else{
         // 渲染
