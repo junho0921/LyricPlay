@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>LyricPlay</title>
+</head>
+<body style="background: lightgray; height: 2000px;">
+<div class="c"></div>
+
+<script src="../src/mock2.js"></script>
+<script src="../src/mock.js"></script>
+<!--先, 加载依赖的jquery-->
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<!--后, 加载canvas飞屏模块-->
+<script src="../test/mock.js"></script>
+<script src="../test/dataTimer.js"></script>
+<script src="../src/Lyric_dataHandler.js"></script>
+<script src="../src/Lyric_canvas.js"></script>
+<script src="../src/GapHandler.js"></script>
+<script src="../src/LyricPlay.js"></script>
+<!--使用示范-->
+<script>
+  // 步骤1(必须): 先创建一个实例
+  var fr = +window.location.hash.replace('#', '') ||60;
+  console.error(1000/fr);
+
+  var lp = new LyricPlay({
+	  canvas:{
+		  view: '.c',
+		  rows: 7,
+	  },
+	  play:{
+		  frames: fr,
+		  lyricRows: 7,     // 显示歌词行数
+	  }
+  });
+
+  window._getData = function (result) {
+    lp.render(result);
+  };
+
+</script>
+
+</body>
+</html>

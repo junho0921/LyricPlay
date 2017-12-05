@@ -98,6 +98,28 @@
       // 初始化歌曲缓存
       this.song = {rows:{}, name:null};
     },
+    /*
+    * 接受歌词数据
+    * @desc 若同一首歌曲的话就使用拷贝方法
+    *
+    * */
+    receiveData: function (data) {
+      if(data.name === this.song.name){
+        // $.extend(true, this.song, data);
+        this.song.position = data.position;
+        var songRows = this.song.rows;
+        $.each(data.rows, function (_rowIndex, _rd) {
+          if(!isNaN(_rowIndex) && !songRows[_rowIndex]) {
+            songRows[_rowIndex] = _rd;
+          }
+        });
+        // todo 这里好像不需要
+        this.song.currentRowIndex = data.currentRowIndex;
+        this.song.currentWordIndex = data.currentWordIndex;
+      }else{
+        this.song = data;
+      }
+    },
     // 创建并缓存歌词播放信息的Message实例
     /*
     * func render
@@ -113,13 +135,16 @@
     * */
     render: function (song) {
       // 加工数据
-      if(processData(song, this)){
+      var data = reducer(song);
+      // console.log('reducer -> ', data);
+      if(data){
+        this.receiveData(data);
         // 记录播放的初始数据, 用于控制播放的精准度
-        this.memo.initPosition = +song.position;
+        this.memo.initPosition = +data.position;
         this.memo.initRenderTime = Date.now();
         // 标记（当前句与字的索引值只是提供方便计算）
-        this.memo.currentRowIndex = +song.currentRowIndex || Object.keys(song.rows)[0] || 0; // todo currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
-        this.memo.currentWordIndex = +song.currentWordIndex || 0;
+        this.memo.currentRowIndex = +data.currentRowIndex || Object.keys(data.rows)[0] || 0; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+        this.memo.currentWordIndex = +data.currentWordIndex || 0;
         // 重置
         this._reset();
         // 无论有没有当前的歌句都显示，查找的任务交给计算方法

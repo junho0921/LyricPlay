@@ -1,6 +1,5 @@
-fxDefine('timer', function () {
+(function () {
   'use strict';
-  __inline('/static/room/modules/accLyric/mock.js');
 
   function splitLyric (songData) {
     return songData.match(/\[.+\].+\r\n/g);
@@ -62,4 +61,4 @@ fxDefine('timer', function () {
   }
   runTimer();
 
-});
+})();
