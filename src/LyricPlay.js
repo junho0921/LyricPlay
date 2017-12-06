@@ -18,6 +18,9 @@
 
 })(function() {
   'use strict';
+  __inline('/static/room/modules/LyricPlay/src/GapHandler.js');
+  __inline('/static/room/modules/LyricPlay/src/LyricCanvas.js');
+  __inline('/static/room/modules/LyricPlay/src/LyricReducer.js');
   /*
   * 歌词播放
   * todo
@@ -176,7 +179,6 @@
     * func renderProgress
     * @desc 渲染进度方法， 是每次间隔的方法
     *     间隔callback的内容是获取当前的进度去渲染
-    * @param beforeRender  [function] 渲染前的回调函数 todo 优化为判断来执行
     * */
     splitFlow: function () {
       var st = this.getProgress();
