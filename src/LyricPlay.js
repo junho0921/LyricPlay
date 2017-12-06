@@ -43,22 +43,22 @@
   var _config = {
     // 画板配置
     canvas: {
-     view: 'body',     // 生成歌词播放canvas所在的容器
-     rows: 6,         // 显示歌词行数
-     height: 300,
-     lineHeight: 40,
-     fontSize: 30,
-     width: 200,
-     opacity: 1,
-     color: '#666',
-     fontFamily: 'Microsoft YaHei',
-     highLightColor: '#0C7',
-     paddingRight: 40, // 歌词显示的最右边距
-     /*阴影*/
-     shadowBlur: 3,
-     shadowOffsetX: 0,
-     shadowOffsetY: 0,
-     shadowColor: '#fff'
+      view: 'body',     // 生成歌词播放canvas所在的容器
+      rows: 6,          // 显示歌词行数
+      height: 300,      // 歌词画板高度
+      width: 200,       // 歌词画板宽度
+      lineHeight: 40,   // 歌词行高
+      fontSize: 30,     // 歌词字体大小
+      opacity: 1,       // 歌词显示透明度
+      color: '#666',    // 歌词颜色
+      highLightColor: '#0C7',        // 歌词高亮颜色
+      fontFamily: 'Microsoft YaHei', // 歌词字体类型
+      paddingRight: 40, // 歌词显示的最右边距
+      /*阴影*/
+      shadowBlur: 3,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#fff'
     },
     // 播放配置
     play: {

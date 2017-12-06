@@ -1,4 +1,4 @@
-= fx.FlyMsg
+= 歌词模块
 :toc: left
 :toclevels: 3
 :toc-title: 目录
@@ -7,89 +7,54 @@
 :sectlinks:
 :sectnums:
 
-== 繁星canvas飞屏模块
+== 使用说明
 
-=== Installation
+=== demo
 
-	$ cd static
-	$ npm set registry http://npm.fxwork.kugou.net
-	$ npm install fx.FlyMsg
+ demo/Lyric_test_mock.html
 
-=== 模块说用示范
-
-==== 使用demo
-
- fesdk.fanxing.com\static\fx.FlyMsg\demo\simple.html
-
-==== 说明
+=== 配置说明
 
 .配置
 [source,javascript]
 ----
-var _config = {
-  view: 'body', // 飞屏DOM的容器
-  containerClass: 'flyMsg', // 飞屏的类名
-  duration:{
-    display: 1000 * 10, // 内容的展示时间
-    slideIn: 1000 * 1.3,　// 从左滑入的过渡时间
-    slideBack: 1000 * 1.2,　// 从左滑入的过渡时间
-    fadeOut: 1000 * 1.2,　// 内容消失的过渡时间
-    slideUp: 1000 * 0.4　// 滑上去的过渡时间
-  },
-  // 阴影配置
-  shadowBlur: isLessShadow ? 2: 10,
-  css:{
-    container:{ // 飞屏canvas的尺寸与样式设置
-      height: 300,
-      width: 1080,
-      left: 100,
-      top: 0,
-      position: 'absolute',
-      'z-index': 3002,
-      'pointer-events': 'none'
+  /*
+   * LyricPlay的默认配置属性
+   * */
+  var _config = {
+    // 画板配置
+    canvas: {
+      view: 'body',     // 生成歌词播放canvas所在的容器
+      rows: 6,          // 显示歌词行数
+      height: 300,      // 歌词画板高度
+      width: 200,       // 歌词画板宽度
+      lineHeight: 40,   // 歌词行高
+      fontSize: 30,     // 歌词字体大小
+      opacity: 1,       // 歌词显示透明度
+      color: '#666',    // 歌词颜色
+      highLightColor: '#0C7',        // 歌词高亮颜色
+      fontFamily: 'Microsoft YaHei', // 歌词字体类型
+      paddingRight: 40, // 歌词显示的最右边距
+      /*阴影*/
+      shadowBlur: 3,
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      shadowColor: '#fff'
     },
-    msg:{  // 飞屏信息尺寸与样式设置
-      width: 584,
-      'font-size': 30,
-      'line-height': 40,
-      slideInToPosX : 0, // 飞屏滑入的最左位置
-      slideBackToPosX : 126, // 飞屏滑入后回归的位置
-    },
-    imgWidth: 40, // 飞屏图片的尺寸
-    imgPadding: 4,// 飞屏图片的间距
-  },
-  style:{
-    fontColor: '#fff',
-    flag_0: '#FF005F', // 配置0: 普通
-    flag_1: '#00D7E6', // 配置1: 守护
-    flag_2: '#CD4A00', // 配置2: 普通VIP
-    flag_3: '#5600FF', // 配置3: 白金VIP
-  },
-  imgPlaceMark: '|<>|', // 图片的占位符号
-  imgPreMarkRgx: /\|</,
-  imgEndMarkRgx: />\|/,
-  isImgPlaceRgx: /\|<>\|/, // 识别飞屏消息是否含有图片占位符号的正则
-  imgPlaceRgx: /\|<>\|/g,
-  imgWrapMark: /^<(.+)>$/,
-};
+    // 播放配置
+    play: {
+      frames: 60,       // 每秒显示的帧数
+      remainTime: 3000, // 歌词播放结束后的保留显示时间
+    }
+  };
 ----
 
-==== 实例的生命周期方法
+== 模块说明
 
-===== fw.onEmitNewMessage
-当新的飞屏信息发射时, 触发本方法
+src/GapHandler.js -- 时间间隔控制器, 用于动画播放的
 
-===== fw.onAllAnimationEnd
-飞屏模块结束所有动画要隐藏canvas时触发该方法
+src/LyricCanvas.js -- 歌词渲染模块
 
-===== fw.afterSlideIn
-当新的飞屏信息滑入至静止时, 触发本方法
+src/LyricPlay.js -- 歌词动画逻辑模块
 
-===== fw.onError
-报错时触发的方法
-
-== Release History
-1.0.0 Released
-1.0.1 修复飞屏模块的动画状态status问题
-1.0.2 修复发射飞屏的顺序bug
-1.0.3 优化, 让飞屏模块的动画配置更灵活
+src/LyricReducer.js -- 歌词数据处理器
