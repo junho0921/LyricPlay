@@ -23,14 +23,15 @@
   console.error(1000/fr);
 
   var lp = new LyricPlay({
-	  canvas:{
-		  view: '.c',
-		  rows: 7,
-	  },
-	  play:{
-		  frames: fr,
-		  lyricRows: 7,     // 显示歌词行数
-	  }
+    canvas:{
+      view: '.c',
+      width: 600,
+      rows: 7,
+    },
+    play:{
+      frames: fr,
+      lyricRows: 7,     // 显示歌词行数
+    }
   });
 
   // 给测试的定时器绑定事件接受数据

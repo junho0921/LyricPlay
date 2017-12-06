@@ -96,7 +96,13 @@
       // 播放歌词的行的索引值
       this.runningIndex = Math.round((this.config.lyricRows-1) / 2);
       // 初始化歌曲缓存
-      this.song = {rows:{}, name:null};
+      this.song = {rows:{}, name:null, singer: null};
+    },
+    /*
+    * 判断数据是否已经换歌
+    * */
+    isNotChangeSong : function (data) {
+      return data && data.name === this.song.name && data.singer === this.song.singer;
     },
     /*
     * 接受歌词数据
@@ -104,7 +110,7 @@
     *
     * */
     receiveData: function (data) {
-      if(data.name === this.song.name){
+      if(!this.isNotChangeSong(data)){
         // $.extend(true, this.song, data);
         this.song.position = data.position;
         var songRows = this.song.rows;
@@ -113,9 +119,6 @@
             songRows[_rowIndex] = _rd;
           }
         });
-        // todo 这里好像不需要
-        this.song.currentRowIndex = data.currentRowIndex;
-        this.song.currentWordIndex = data.currentWordIndex;
       }else{
         this.song = data;
       }
@@ -136,15 +139,14 @@
     render: function (song) {
       // 加工数据
       var data = reducer(song);
-      // console.log('reducer -> ', data);
       if(data){
         this.receiveData(data);
         // 记录播放的初始数据, 用于控制播放的精准度
-        this.memo.initPosition = +data.position;
+        this.memo.initPosition = data.position;
         this.memo.initRenderTime = Date.now();
         // 标记（当前句与字的索引值只是提供方便计算）
-        this.memo.currentRowIndex = +data.currentRowIndex || Object.keys(data.rows)[0] || 0; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
-        this.memo.currentWordIndex = +data.currentWordIndex || 0;
+        this.memo.currentRowIndex = data.currentRowIndex; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+        this.memo.currentWordIndex = data.currentWordIndex;
         // 重置
         this._reset();
         // 无论有没有当前的歌句都显示，查找的任务交给计算方法
@@ -178,7 +180,7 @@
     * */
     splitFlow: function () {
       var st = this.getProgress();
-      st.status !== 'running' && console.log('status -> ', st);
+      // st.status !== 'running' && console.log('status -> ', st);
       switch (st.status){
         case 'running':
           this.paint(st.width);
@@ -310,7 +312,7 @@
      * */
     _getPaintLyric: function () {
       var memo = this.memo;
-      var notChangeSong = memo.lyricStr && memo.lyricStr.name === this.song.name;
+      var notChangeSong = this.isNotChangeSong(memo.lyricStr);
       // 由于memo.currentRowIndex已经是最新状态, 用于判断歌词缓存是否最新
       var notChangeIndex = memo.lyricStr && memo.lyricStr.index === memo.currentRowIndex;
       if(notChangeSong && notChangeIndex){
@@ -327,6 +329,7 @@
         }
         ary.index = index;
         ary.name = this.song.name;
+        ary.singer = this.song.singer;
         // 记录已经渲染的状态
         memo.lyricStr = ary;
         return ary;

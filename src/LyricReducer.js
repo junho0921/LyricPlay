@@ -88,8 +88,9 @@ function reducer(result) {
   // 整理数据
   var
     song = {
-      position:result.position,
+      position: +result.position,
       name: result.songName,
+      singer: result.singerName,
       rows: {}
     };
   try{
