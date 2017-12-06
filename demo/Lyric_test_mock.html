@@ -7,8 +7,6 @@
 <body style="background: lightgray; height: 2000px;">
 <div class="c"></div>
 
-<script src="../src/mock2.js"></script>
-<script src="../src/mock.js"></script>
 <!--先, 加载依赖的jquery-->
 <script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
 <!--后, 加载canvas飞屏模块-->
@@ -35,6 +33,7 @@
 	  }
   });
 
+  // 给测试的定时器绑定事件接受数据
   window._getData = function (result) {
     lp.render(result);
   };
