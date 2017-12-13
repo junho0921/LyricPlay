@@ -51,10 +51,10 @@
 
 == 模块说明
 
-  src/GapHandler.js -- 时间间隔控制器, 用于动画播放的
+src/GapHandler.js -- 时间间隔控制器, 用于动画播放的
 
-  src/LyricCanvas.js -- 歌词渲染模块
+src/LyricCanvas.js -- 歌词渲染模块
 
-  src/LyricPlay.js -- 歌词动画逻辑模块
+src/LyricPlay.js -- 歌词动画逻辑模块
 
-  src/LyricReducer.js -- 歌词数据处理器
+src/LyricReducer.js -- 歌词数据处理器

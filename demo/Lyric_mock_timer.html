@@ -3,15 +3,16 @@
 <head>
 	<meta charset="UTF-8">
 	<title>LyricPlay</title>
+  <script>function __inline () {return null;}</script>
 </head>
 <body style="background: lightgray; height: 2000px;">
 <div class="c"></div>
 
-<script src="../src/mock2.js"></script>
-<script src="../src/mock.js"></script>
 <!--先, 加载依赖的jquery-->
 <script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
-<!--后, 加载canvas飞屏模块-->
+<!--模拟数据-->
+<script src="../test/mock_type_2.js"></script>
+<!--加载模块-->
 <script src="../src/LyricReducer.js"></script>
 <script src="../src/LyricCanvas.js"></script>
 <script src="../src/GapHandler.js"></script>
@@ -19,34 +20,31 @@
 <!--使用示范-->
 <script>
   // 步骤1(必须): 先创建一个实例
-  var fr = +window.location.hash.replace('#', '') ||60;
-  console.error(1000/fr);
-
-  // 测试情景:
-  // 测试1: 开始前的等待
-//  window.mock.position = 33000;
-  // 测试2: 正常的播放
-  // 测试3: 错乱的position
-//  window.mock.position = 47000;
-
   var lp = new LyricPlay({
 	  canvas:{
 		  view: '.c',
-		  rows: 7,
-	  },
-	  play:{
-		  frames: fr,
-		  lyricRows: 7,     // 显示歌词行数
+		  rows: 2
 	  }
   });
-
-  lp.render(window.mock);
-
-//	setTimeout(function () {
-//		lp.stop();
-//	}, 20000)
-
+  // 运行定时器模拟客户端的数据发射
+  function runTimer (mock) {
+    if(mock.data.data.state === 1){
+      lp.render(mock.data.data);
+    }else{
+      lp.stop();
+    }
+    var nextMock = _lyricData.shift();
+    if(nextMock){
+      var duration = nextMock.point - mock.point;
+      if(duration > 2000){
+        duration = 2000;
+      }
+      setTimeout(function () {
+        runTimer(nextMock);
+      }, duration);
+    }
+  }
+  runTimer(_lyricData.shift());
 </script>
-
 </body>
 </html>

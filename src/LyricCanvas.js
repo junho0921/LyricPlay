@@ -7,11 +7,12 @@ var staticCss = {
     overflow:'hidden'
   },
   wrap_inner: {
-    position: 'relative'
+    position: 'relative',
+    width:'auto'
   },
   canvas:{
     position: 'absolute',
-    width: 2000,
+    width: 900,
     top: 0,
     left: 0
   },
@@ -25,18 +26,20 @@ var staticCss = {
 /*
  * LyricPlay的默认配置属性
  * */
-var defaultHeight = 100;
+var defaultHeight = 40;
 var defaultRows = 1;
-var _config = {
+var _canvasConfig = {
   view: 'body',     // 生成歌词播放canvas所在的容器
-  lineHeight: 40,
-  fontSize: 30,
-  width: 200,
-  opacity: 1,
-  color: '#666',
-  fontFamily: 'Microsoft YaHei',
-  highLightColor: '#0C7',
-  paddingRight: 40, // 歌词显示的最右边距 // todo 考虑这个不是画板配置
+  rows: 1,          // 显示歌词行数
+  height: null,     // 歌词画板高度, 默认没有值, 通过lightHeight与rows计算得出
+  width: 500,       // 歌词画板宽度
+  lineHeight: 20,   // 歌词行高
+  fontSize: 16,     // 歌词字体大小
+  opacity: 1,       // 歌词显示透明度
+  color: '#999',    // 歌词颜色
+  highLightColor: '#0C7',        // 歌词高亮颜色
+  fontFamily: 'Microsoft YaHei', // 歌词字体类型
+  paddingRight: 40, // 歌词显示的最右边距
   /*阴影*/
   shadowBlur: 3,
   shadowOffsetX: 0,
@@ -46,14 +49,13 @@ var _config = {
 
 /*
  * 歌词画板方法，与song数据结构无关，只关心渲染的字符与进度条宽度
- * todo 优化this.runningIndex
  * */
 function LyricCanvas(config){
   // 构建配置
-  this.config = $.extend({}, _config, config);
+  this.config = $.extend({}, _canvasConfig, config);
   this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
   this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
-  // 创建缓存
+  // 创建缓存, 用于优化重复渲染
   this.memo = {runningIndex:0, currentWith:0, lyrics:[]};
   // 创建歌词播放DOM与canvas
   this._renderContainer();
@@ -93,6 +95,7 @@ LyricCanvas.prototype = {
    * @param currentWith [number] 当前的进度宽度
    * */
   draw: function (lyrics, runningIndex, currentWith) {
+    // 判断是否需要重新渲染
     if(this.isNeedRePaint(lyrics, runningIndex, currentWith)){
       // 渲染歌词文案
       this.paintLyric(lyrics, runningIndex);
@@ -112,6 +115,18 @@ LyricCanvas.prototype = {
     this.context_run.clearRect(0, lh * runningIndex, currentWith, lh);
     // 存储已经渲染的状态
     this.memo.currentWith = currentWith;
+  },
+  /*
+  * 调整画板的显示宽度
+  * */
+  resize: function (config) {
+    this.config.width = config.width || this.config.width;
+    this.config.height = config.height || this.config.height;
+    this.resizeCanvas();
+  },
+  resizeCanvas: function () {
+    this.$wrap.width(this.config.width);
+    this.$wrap_inner.height(this.config.height);
   },
   /*
    * func isNeedRePaint
@@ -153,16 +168,10 @@ LyricCanvas.prototype = {
    * */
   _renderContainer: function () {
     // 底层文案的canvas
-    var dom_txt = this._renderCanvas(
-      staticCss.canvas,
-      staticCss.className.txt
-    );
+    var dom_txt = this._renderCanvas(staticCss.className.txt);
     this.context_txt = dom_txt[0].getContext('2d');
     // 顶层文案的canvas
-    var dom_run = this._renderCanvas(
-      staticCss.canvas,
-      staticCss.className.run
-    );
+    var dom_run = this._renderCanvas(staticCss.className.run);
     this.context_run = dom_run[0].getContext('2d');
     // 配置画板
     this.staticConfig();
@@ -190,11 +199,13 @@ LyricCanvas.prototype = {
    * func _renderCanvas
    * @desc 渲染画板
    * */
-  _renderCanvas: function (canvasCss, className) {
+  _renderCanvas: function (className) {
     var cf = this.config;
+    var canvasCss = staticCss.canvas;
     if(!this.$wrap){
-      this.$wrap = $('<div>').css(staticCss.wrap_outer).width(cf.width).attr('class', staticCss.className.wrap);
-      this.$wrap_inner = $('<div>').appendTo(this.$wrap).css({position: 'relative', width:staticCss.canvas.width, height: cf.height});
+      this.$wrap = $('<div>').css(staticCss.wrap_outer).attr('class', staticCss.className.wrap);
+      this.$wrap_inner = $('<div>').appendTo(this.$wrap).css(staticCss.wrap_inner);
+      this.resizeCanvas();
       $(cf.view).append(this.$wrap);
     }
     this.$wrap_inner.append(
@@ -206,6 +217,7 @@ LyricCanvas.prototype = {
    * 渲染歌词
    * */
   paintLyric: function(lyrics, runningIndex){
+    this.$wrap.show();
     this.$wrap_inner.css('left', 0);
     this._clearRect();
     for(var i = 0, len = lyrics.length; i < len; i++){
