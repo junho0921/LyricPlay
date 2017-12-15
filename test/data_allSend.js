@@ -30,14 +30,10 @@
   }
 
   var currentRow = 2;
-  var songData = window.mock.lyric.song_4;
+  var songData = window.mock.lyric.song_5;
   var rows = splitLyric(songData);
   var points = getPoints(songData);
   var songName = getSongName(songData);
-
-  console.log('rows', rows);
-  console.log('points', points);
-  console.log('songName', songName);
 
 
   var startPos = 0;
@@ -65,5 +61,5 @@
     // setTimeout(runTimer, 3000);
     // currentRow++;
   }
-  setTimeout(runTimer, 3000);
+  setTimeout(runTimer, 1000);
 })();
