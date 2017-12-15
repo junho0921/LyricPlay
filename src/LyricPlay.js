@@ -236,7 +236,7 @@
             }
           }else{
             // [状态"end"] : 没有下一字也没有下一句, 结束');
-            return {isEnd: true, wait: this.config.remainTime + wordRemainTime, width: 800}; // todo
+            return {isEnd: true, wait: this.config.remainTime + wordRemainTime, width: onShowWord.right};
           }
         }
       }
