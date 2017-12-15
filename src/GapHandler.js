@@ -5,7 +5,7 @@
 /*
  * class GapHandler
  * @desc 间隔工具, 优先使用浏览器的api：requestAnimationFrame, 往下兼容使用setTimeout
- * @param {object} [config] 间隔回调函数，必须
+ * @param {object} [config] 配置
  * @param {number} [config.loopGap] 执行间隔, 配置了就使用浏览器定时器，没有配置就是用rAF
  * @param {object} [config.context] 执行回调函数的上下文
  * 优点:

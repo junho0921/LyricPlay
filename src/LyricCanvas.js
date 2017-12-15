@@ -33,7 +33,7 @@ var _canvasConfig = {
   rows: 1,          // 显示歌词行数
   height: null,     // 歌词画板高度, 默认没有值, 通过lightHeight与rows计算得出
   width: 500,       // 歌词画板宽度
-  lineHeight: 20,   // 歌词行高
+  lineHeight: 22,   // 歌词行高
   fontSize: 16,     // 歌词字体大小
   opacity: 1,       // 歌词显示透明度
   color: '#999',    // 歌词颜色

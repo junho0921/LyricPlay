@@ -30,35 +30,40 @@
   }
 
   var currentRow = 2;
-  var songData = window.mock.lyric.song_2;
+  var songData = window.mock.lyric.song_4;
   var rows = splitLyric(songData);
   var points = getPoints(songData);
   var songName = getSongName(songData);
 
+  console.log('rows', rows);
+  console.log('points', points);
+  console.log('songName', songName);
+
+
+  var startPos = 0;
+  var _now = Date.now();
+  var vari = 0;
+  function __getPos () {
+    vari += -100;
+    return Date.now() - _now + startPos + vari;
+  }
   /*测试使用的歌词信息定时器*/
   function runTimer () {
     if(currentRow >= points.length){
       window._onEnd && window._onEnd();
       return false;
     }
-    // 发射歌词
-    var sendRows = {};
-    sendRows[currentRow] = rows[currentRow];
-    sendRows[currentRow+1] = rows[currentRow+1];
-    sendRows[currentRow+2] = rows[currentRow+2];
-
     var sendData = {
       songName: songName,
-      rows: sendRows,
-      position: +getStartTime(rows[currentRow]) - 100 // 测试模式下的开始位置后移10ms
+      rows: rows,
+      position: __getPos() // 测试模式下的开始位置后移10ms
     };
     window._getData && window._getData(sendData);
     // 获取本歌词的过渡时间
-    var duration = points[currentRow].duration;
+    // var duration = points[currentRow].duration;
     // 在歌词过渡时间后再触发歌词发射
-    setTimeout(runTimer, duration);
-    currentRow++;
+    // setTimeout(runTimer, 3000);
+    // currentRow++;
   }
-  runTimer();
-
+  setTimeout(runTimer, 3000);
 })();

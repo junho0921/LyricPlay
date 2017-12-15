@@ -13,12 +13,14 @@ function calcRowPos(row, calcHandler) {
   row.content.forEach(function (word) {
     var width = calcHandler(word.str);
     sum += width;
-    // 每字的位置
+    // 每字的位置(右侧)
     word.right = sum;
     // 每字的宽度
     word.width = width;
     // 计算每字的最后播放时间戳
     word.endPos = word.startPoint + word.duration + row.startPoint;
+    // 计算每字的最后播放时间戳
+    word.startPos = word.startPoint + row.startPoint;
     // 每句的文案
     row.strAry += word.str;
   });
@@ -26,7 +28,7 @@ function calcRowPos(row, calcHandler) {
 /*
 * 客户端协议:
 * 1, 数据格式:
-* 1-1, 必须有字段: position, rows, songName
+* 1-1, 必须有字段: position, rows, songName, singerName, userId
 * 1-2, rows字段的keys必须是数字, 表示歌句的索引值
 * 1-3, rows字段的values必须是字符串
 *      . 必须以[数字,数字]开头, 表示每句歌词的时间
@@ -121,6 +123,9 @@ function findCurrentRow(song){
         }
       }
     });
+    if(isNaN(currentRow)){
+      currentRow = +Object.keys(song.rows)[0];
+    }
     return currentRow;
   }
 }

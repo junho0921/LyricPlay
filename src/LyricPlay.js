@@ -51,7 +51,7 @@
   /**
    * @class LyricPlay
    * @classdesc 歌词播放模块
-   * @example var fw = new LyricPlay()
+   * @example var fw = new LyricPlay({canvas:{lineHeight:40}, play:{frames: 60}});
    * @param config {Object} 配置: 接受的配置的内容是默认配置对象_config的属性, 请看_config的配置说明
    */
   function LyricPlay (config) {
@@ -92,18 +92,27 @@
     * @param {object} [data] 接收的数据
     * */
     receiveData: function (data) {
+
+      // 记录播放的初始数据, 用于控制播放的精准度
+      this.memo.initPosition = data.position;
+      this.memo.initRenderTime = Date.now();
+
       if(!this.isNotChangeSong(data)){
         // 若没有换歌, 那么继续添加歌词信息缓存就可以
-        // var songRows = this.song.rows;
-        // $.each(data.rows, function (_rowIndex, _rd) {
-        //   if(!isNaN(_rowIndex) && !songRows[_rowIndex]) {
-        //     songRows[_rowIndex] = _rd;
-        //   }
-        // });
         $.extend(this.song.rows, data.rows);
+        if(this.memo.currentRowIndex !== data.currentRowIndex){
+          // 标记（当前句与字的索引值只是提供方便计算）
+          this.memo.currentRowIndex = data.currentRowIndex; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+          this.memo.currentWordIndex = data.currentWordIndex;
+        }
       }else{
         // 若换歌了, 那么直接替换数据就可以
         this.song = data;
+        // 标记（当前句与字的索引值只是提供方便计算）
+        this.memo.currentRowIndex = data.currentRowIndex; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
+        this.memo.currentWordIndex = data.currentWordIndex;
+        // 换歌
+        this.canvas.clear();
       }
     },
     /*
@@ -116,16 +125,10 @@
       var data = lyricReducer(song);
       if(data){
         this.receiveData(data);
-        // 记录播放的初始数据, 用于控制播放的精准度
-        this.memo.initPosition = data.position;
-        this.memo.initRenderTime = Date.now();
-        // 标记（当前句与字的索引值只是提供方便计算）
-        this.memo.currentRowIndex = data.currentRowIndex; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
-        this.memo.currentWordIndex = data.currentWordIndex;
         // 清理定时器, 阻止之前触发的动画
         this.gapHandler.clear();
         // 触发计算并渲染, 无论有没有当前的歌句都显示，查找的任务交给计算方法
-        this.splitFlow();
+        this._loopFun();
         // 触发事件
         this.trigger('onShow', [data]);
       }
@@ -144,64 +147,28 @@
       return Date.now() - this.memo.initRenderTime + this.memo.initPosition;
     },
     /*
-    * func renderProgress
-    * @desc 渲染进度方法， 是每次间隔的方法
-    *     间隔callback的内容是获取当前的进度去渲染
+    * func _loopFun
+    * @desc 间隔渲染方法, 获取获取当前的渲染进度, 并设置间隔来反复执行
     * */
-    splitFlow: function () {
-      var st = this.getProgress();
-      switch (st.status){
-        case 'running':
-          this.paint(st.width);
-          return this.gapHandler.nextGap(this.splitFlow);
-          break;
-        case 'nextWord':
-          this.memo.currentWordIndex++;
-          return this.splitFlow();
-          break;
-        case 'waitWord':
-          this.memo.currentWordIndex++;
-          return this.gapHandler.setTimeout(this.splitFlow, st.wait);
-          break;
-        case 'waitNext':
-          this.memo.currentRowIndex++;
-          this.memo.currentWordIndex = 0;
-          this._resetOnShowLyric();
-          this.paint(0);
-          return this.gapHandler.setTimeout(this.splitFlow, st.wait);
-          break;
-        case 'nextRow':
-          this.memo.currentRowIndex++;
-          this.memo.currentWordIndex = 0;
-          this._resetOnShowLyric();
-          return this.splitFlow();
-          break;
-        case 'end':
-          return this.gapHandler.setTimeout(this.stop, this.config.remainTime - st.overGap);
-          break;
-        case 'preWord':
-          this.memo.currentWordIndex--;
-          return this.splitFlow();
-          break;
-        case 'preRow':
-          this.memo.currentRowIndex--;
-          this.memo.currentWordIndex = 0; // 修正当前歌字的索引值为0
-          this._resetOnShowLyric();
-          return this.splitFlow();
-          break;
-        case 'preWait':// 最开始的等待或者每句开始前的等待
-        case 'waitBeginning':// 最开始的等待或者每句开始前的等待
-          this.paint(0);
-          return this.gapHandler.setTimeout(this.splitFlow, st.wait);
-          break;
+    _loopFun: function () {
+      var st = this.getProgress(this._getPos());
+      if(st.isEnd){
+        st.wait > 0 && this.paint(st.width);
+        return this.gapHandler.setTimeout(this.stop, st.wait);
+      }
+      this.paint(st.width);
+      if(st.wait > 0){
+        return this.gapHandler.setTimeout(this._loopFun, st.wait);
+      }else if(st.wait === 0){
+        return this.gapHandler.nextGap(this._loopFun);
       }
     },
     /*
     * func getProgress
     * @desc 获取当前进度长度
-    * 优化，因为是一个比较频繁调用的方法，所以要注意
+    * @param {number} [currentPos] 当前的播放进度
     * */
-    getProgress: function () {
+    getProgress: function (currentPos) {
       var row = this.getCurrentRow();
       if(!row){return false;}
       // 计算每句的数据
@@ -209,45 +176,111 @@
       var
         memo = this.memo,
         onShowWord = row.content[memo.currentWordIndex],
-        wordRemainTime = onShowWord.endPos - this._getPos();
+        wordRemainTime = onShowWord.endPos - currentPos; // 当前字的保留显示时间
       if(wordRemainTime > 0){
+        // 当前字的保留显示时间有剩余
         if(wordRemainTime <= onShowWord.duration){
-          return {status: 'running', width: onShowWord.right - (wordRemainTime / onShowWord.duration * onShowWord.width)};
+          // [状态"running"] : 当前字的保留显示时间是本字的过渡时间范围内, 表示进度是当前的歌字范围, 播放显示
+          return {width: onShowWord.right - (wordRemainTime / onShowWord.duration * onShowWord.width), wait: 0};
         }else{
-          if(this.memo.currentWordIndex > 0){
-            return {status: 'preWord'};
+          // 当前字的保留显示时间是超过本字的过渡时间范围内, 表示进度是上一个歌字的范围
+          if(memo.currentWordIndex > 0){
+            // [状态"preWord"] : 有上一字, 往上一字计算
+            memo.currentWordIndex--;
+            return this.getProgress(currentPos);
           }else{
             if(this.song.rows[memo.currentRowIndex-1]){
-              return {status: 'preRow'};
+              // [状态"preRow"] : 没有有上一字, 往上一句计算
+              memo.currentRowIndex--;
+              memo.currentWordIndex = 0; // 修正当前歌字的索引值为0
+              this._resetOnShowLyric();
+              return this.getProgress(currentPos);
             }else{
-              return {status: 'preWait', wait: wordRemainTime - onShowWord.duration};
+              // [状态"preWait"] : 没有有上一字且上一句, 等待显示
+              return {width: 0, wait: wordRemainTime - onShowWord.duration};
             }
           }
         }
       }else{
+        // 当前字的保留显示时间没有剩余
         var nextWord = row.content[memo.currentWordIndex+1];
         if(nextWord){
+          // 有下一字
           var wordWait = (row.startPoint + nextWord.startPoint - onShowWord.endPos) + wordRemainTime;
           if(wordWait > 0){
-            return {status: 'waitWord', wait: wordWait};
+            // [状态"waitWord"] : 但没有到下一字的开始时间, 等待显示
+            memo.currentWordIndex++;
+            return {width: onShowWord.right, wait: wordWait};
           }else{
-            return {status: 'nextWord'};
+            // [状态"nextWord"] : 满足下一字的开始时间, 进入下一字的计算
+            memo.currentWordIndex++;
+            return this.getProgress(currentPos);
           }
         }else{
-          var nextRow = this.song.rows[this.memo.currentRowIndex+1];
+          var nextRow = this.song.rows[memo.currentRowIndex+1];
           var rowOverGap = -wordRemainTime;
           if(nextRow){
+            // 没有下一字, 但有下一句
             var rowWaitGap = nextRow.startPoint - (row.startPoint + row.duration);
-            // if(rowWaitGap < 0){
-            //   return this.trigger('special', ['合唱歌词']);
-            // }
             if(rowWaitGap > rowOverGap){
-              return {status: 'waitNext', wait: rowWaitGap - rowOverGap}
+              // [状态"waitNext"] : 但没有到下一句的开始时间, 等待显示
+              memo.currentRowIndex++;
+              memo.currentWordIndex = 0;
+              this._resetOnShowLyric();
+              return {width: 0, wait: rowWaitGap - rowOverGap}
             }else{
-              return {status: 'nextRow', overGap: rowOverGap - rowWaitGap};
+              // [状态"nextRow"] : 满足下一句的开始时间, 等待显示
+              memo.currentRowIndex++;
+              memo.currentWordIndex = 0;
+              this._resetOnShowLyric();
+              return this.getProgress(currentPos);
             }
           }else{
-            return {status: 'end', overGap: rowOverGap};
+            // [状态"end"] : 没有下一字也没有下一句, 结束
+            return {isEnd: true, wait: this.config.remainTime - rowOverGap, width: 800}; // todo
+          }
+        }
+      }
+    },
+    /*
+    * func _getProgress
+    * @desc 获取当前进度长度
+    * @param {number} [currentPos] 当前的播放进度
+    * */
+    _getProgress: function (currentPos) {
+      var row = this.getCurrentRow();
+      if(!row){return false;}
+      // 计算每句的数据
+      calcRowPos(row, this.canvas._calcWordWidth.bind(this.canvas));
+      var
+        memo = this.memo,
+        onShowWord = row.content[memo.currentWordIndex],
+        preOrNext = currentPos - onShowWord.startPos;
+
+      if(preOrNext === 0){
+        // 当前字
+      }else if(preOrNext > 0){
+        if(preOrNext > onShowWord.duration){
+          if(row.content[memo.currentWordIndex+1]){
+            // 下一个字
+          }else{
+            if(this.song.rows[memo.currentRowIndex+1]){
+              // 后一句
+            }else{
+              // 结束
+            }
+          }
+        }else{
+          // 当前字
+        }
+      }else{
+        if(row.content[memo.currentWordIndex-1]){
+          // 前一个字
+        }else{
+          if(this.song.rows[memo.currentRowIndex-1]){
+            // 前一句
+          }else{
+            // 等待播放
           }
         }
       }
