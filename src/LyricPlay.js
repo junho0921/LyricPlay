@@ -151,6 +151,8 @@
     * @desc 间隔渲染方法, 获取获取当前的渲染进度, 并设置间隔来反复执行
     * */
     _loopFun: function () {
+      // 清空遍历测试
+      this.memo.recursive = 0;
       var st = this.getProgress(this._getPos());
       if(st.isEnd){
         st.wait > 0 && this.paint(st.width);
@@ -169,6 +171,11 @@
     * @param {number} [currentPos] 当前的播放进度
     * */
     getProgress: function (currentPos) {
+      // 若递归的数量超过了限制, 报错, 并且终止显示歌词播放
+      if(++this.memo.recursive > 1000){
+        console.error('LyricPlay recursive overflow');
+        return {isEnd: true, wait: -1, width: 0};
+      }
       var row = this.getCurrentRow();
       if(!row){return false;}
       // 计算每句的数据
