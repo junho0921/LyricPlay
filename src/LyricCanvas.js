@@ -159,6 +159,7 @@ LyricCanvas.prototype = {
     var fixH = (lH - this.config.fontSize) / 2;
     this.context_txt.fillText(txt, 0, (lH * i) - fixH);
     if(i >= runningIndex+1){
+      this.context_run.strokeText(txt, 0, (lH * i) - fixH);
       this.context_run.fillText(txt, 0, (lH * i) - fixH);
     }
   },
@@ -188,6 +189,7 @@ LyricCanvas.prototype = {
     this.context_run.font = this.context_txt.font = css.fontSize + "px "+ css.fontFamily;
     // 字体颜色
     this.context_run.fillStyle = css.color;
+    this.context_run.strokeStyle = css.shadowColor;
     this.context_txt.fillStyle = css.highLightColor;
     // 阴影
     this.context_run.shadowOffsetX = this.context_txt.shadowOffsetX = css.shadowOffsetX || 0;
