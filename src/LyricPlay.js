@@ -97,7 +97,7 @@
       this.memo.initPosition = data.position;
       this.memo.initRenderTime = Date.now();
 
-      if(!this.isNotChangeSong(data)){
+      if(this.isNotChangeSong(data)){
         // 若没有换歌, 那么继续添加歌词信息缓存就可以
         $.extend(this.song.rows, data.rows);
         if(this.memo.currentRowIndex !== data.currentRowIndex){
@@ -111,6 +111,8 @@
         // 标记（当前句与字的索引值只是提供方便计算）
         this.memo.currentRowIndex = data.currentRowIndex; // currentRowIndex 与 currentWordIndex划入memo属性，因为只是内部方便计算位置的状态数据而已
         this.memo.currentWordIndex = data.currentWordIndex;
+        // 清理歌词缓存
+        this._resetOnShowLyric();
         // 换歌
         this.canvas.clear();
       }
@@ -122,7 +124,15 @@
     * */
     render: function (song) {
       // 处理数据获取指定格式的数据
-      var data = lyricReducer(song);
+      var data;
+      try{
+        data = lyricReducer(song);
+      }catch (e){
+        this.elkReport({
+          error: 'lyricReducer error',
+          data: JSON.stringify({name: song.songName, singer: song.singer})
+        });
+      }
       if(data){
         this.receiveData(data);
         // 清理定时器, 阻止之前触发的动画
@@ -174,6 +184,10 @@
       // 若递归的数量超过了限制, 报错, 并且终止显示歌词播放
       if(++this.memo.recursive > 1000){
         console.error('LyricPlay recursive overflow');
+        this.elkReport({
+          error: 'LyricPlay recursive overflow',
+          data: JSON.stringify({name: this.song.name, singer: this.song.singer})
+        });
         return {isEnd: true, wait: -1, width: 0};
       }
       var row = this.getCurrentRow();
@@ -204,7 +218,7 @@
               return this.getProgress(currentPos);
             }else{
               // [状态"preWait"] : 没有有上一字且上一句, 等待显示');
-              return {width: 0, wait: onShowWord.startPoint - currentPos};
+              return {width: 0, wait: row.startPoint + onShowWord.startPoint - currentPos};
             }
           }
         }
@@ -213,7 +227,7 @@
         var nextWord = row.content[memo.currentWordIndex+1];
         if(nextWord){
           // 有下一字');
-          var wordWait = nextWord.startPoint - currentPos;
+          var wordWait = row.startPoint + nextWord.startPoint - currentPos;
           if(wordWait >= 0){
             // [状态"waitWord"] : 但没有到下一字的开始时间, 等待显示');
             memo.currentWordIndex++;
@@ -312,11 +326,27 @@
     },
     resetMemo: function(){
       this.memo = {
+        lyricStr: null,
         initPosition: 0,     // 渲染的时间戳
         initRenderTime: 0,   // 渲染的时间戳
         currentRowIndex: 0,  // 当前渲染的歌句索引值
         currentWordIndex: 0  // 当前渲染的歌字索引值
       };
+    },
+    elkReport:function (args) {
+      try {
+        if (typeof elkLogger !== 'undefined') {
+          var elkUrl = ServiceHost.elkServerUrl;
+          if(!this._logger){
+            this._logger = new elkLogger({
+              group: 'fxweb',
+              project: 'f_room',
+              log_type: 'LyricPlay'
+            }, elkUrl);
+          }
+          this._logger.push(args);
+        }
+      } catch (err) { }
     }
   };
   return LyricPlay;

@@ -19,8 +19,6 @@ function calcRowPos(row, calcHandler) {
     word.width = width;
     // 计算每字的最后播放时间戳
     word.endPos = word.startPoint + word.duration + row.startPoint;
-    // 计算每字的最后播放时间戳
-    word.startPos = word.startPoint + row.startPoint;
     // 每句的文案
     row.strAry += word.str;
   });
