@@ -185,8 +185,8 @@
       if(++this.memo.recursive > 1000){
         console.error('LyricPlay recursive overflow');
         this.elkReport({
-          error: 'LyricPlay recursive overflow',
-          data: JSON.stringify({name: this.song.name, singer: this.song.singer})
+          error: 'RecursiveError',
+          data: JSON.stringify({name: this.song.name, singer: this.song.singer, pos: currentPos})
         });
         return {isEnd: true, wait: -1, width: 0};
       }
@@ -210,10 +210,15 @@
             memo.currentWordIndex--;
             return this.getProgress(currentPos);
           }else{
-            if(this.song.rows[memo.currentRowIndex-1]){
+            if(row.startPoint <= currentPos){
+              // [状态"cRowPreWait"] : 还在本句范围, 等待歌词显示');
+              return {width: 0, wait: onShowWord.startPoint + row.startPoint - currentPos};
+            }
+            var preRow = this.song.rows[memo.currentRowIndex-1];
+            if(preRow){
               // [状态"preRow"] : 没有有上一字, 往上一句计算');
               memo.currentRowIndex--;
-              memo.currentWordIndex = 0; // 修正当前歌字的索引值为0
+              memo.currentWordIndex = (preRow.content && preRow.content.length-1) || 0;
               this._resetOnShowLyric();
               return this.getProgress(currentPos);
             }else{
