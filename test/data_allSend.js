@@ -30,7 +30,7 @@
   }
 
   var currentRow = 2;
-  var songData = window.mock.lyric.song_5;
+  var songData = window.mock.lyric.song_8;
   var rows = splitLyric(songData);
   var points = getPoints(songData);
   var songName = getSongName(songData);
@@ -38,9 +38,9 @@
 
   var startPos = 0;
   var _now = Date.now();
-  var vari = 0;
+  var vari = -100;
   function __getPos () {
-    vari += -100;
+    vari += vari;
     return Date.now() - _now + startPos + vari;
   }
   /*测试使用的歌词信息定时器*/

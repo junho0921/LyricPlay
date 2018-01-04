@@ -29,8 +29,8 @@
     })
   }
 
-  var currentRow = 2;
-  var songData = window.mock.lyric.song_2;
+  var currentRow = 0;
+  var songData = window.mock.lyric.song_7;
   var rows = splitLyric(songData);
   var points = getPoints(songData);
   var songName = getSongName(songData);

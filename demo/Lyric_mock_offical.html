@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>LyricPlay</title>
+	<script>function __inline () {return null;}</script>
+</head>
+<body style="; height: 2000px;">
+<div class="c"></div>
+
+<!--先, 加载依赖的jquery-->
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<!--后, 加载canvas飞屏模块-->
+<script src="../test/mock.js"></script>
+<script src="../test/data_allSend.js"></script>
+<script src="../src/LyricReducer.js"></script>
+<script src="../src/LyricCanvas.js"></script>
+<script src="../src/GapHandler.js"></script>
+<script src="../src/LyricPlay.js"></script>
+<!--使用示范-->
+<script>
+  // 步骤1(必须): 先创建一个实例
+  var lp = new LyricPlay({
+    canvas:{
+      view: '.c',
+    },
+  });
+
+  // 给测试的定时器绑定事件接受数据
+  window._getData = function (result) {
+    lp.render(result);
+  };
+
+</script>
+
+</body>
+</html>
