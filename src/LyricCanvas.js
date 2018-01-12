@@ -1,6 +1,8 @@
 /**
  * Created by jun.ho on 2017/11/26.
  */
+// 适应retina屏幕的分辨率, 扩大画板的倍数
+var retinaRa = 2;
 // 固定配置
 var staticCss = {
   wrap_outer: {
@@ -12,7 +14,7 @@ var staticCss = {
   },
   canvas:{
     position: 'absolute',
-    width: 900,
+    width: 500,
     top: 0,
     left: 0
   },
@@ -22,7 +24,6 @@ var staticCss = {
     run: 'LyricPlay_run'
   }
 };
-
 /*
  * LyricPlay的默认配置属性
  * */
@@ -53,8 +54,12 @@ var _canvasConfig = {
 function LyricCanvas(config){
   // 构建配置
   this.config = $.extend({}, _canvasConfig, config);
+  // 计算画板高度
   this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
+  // 计算行数
   this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
+  // 修正尺寸, 适应retina屏幕的分辨率
+  this._fixSize();
   // 创建缓存, 用于优化重复渲染
   this.memo = {runningIndex:0, currentWith:0, lyrics:[]};
   // 创建歌词播放DOM与canvas
@@ -69,6 +74,18 @@ LyricCanvas.prototype = {
   clear: function () {
     this.$wrap.hide();
     this._clearRect();
+  },
+  /*
+  * func _fixSize
+  * @desc 修正尺寸, 适应retina屏幕的分辨率
+  * */
+  _fixSize: function () {
+    this.config.fontSize = this.config.fontSize * retinaRa;
+    this.config.shadowBlur = this.config.shadowBlur * retinaRa;
+    this.config.lineHeight = this.config.lineHeight * retinaRa;
+    this.config.height = this.config.height * retinaRa;
+    this.config.width = this.config.width * retinaRa;
+    this.config.paddingRight = this.config.paddingRight * retinaRa;
   },
   /*
    * func _calcWordWidth
@@ -86,7 +103,7 @@ LyricCanvas.prototype = {
   _adjustCanvasPos: function (currentWith) {
     var overLeft = currentWith + this.config.paddingRight - this.config.width;
     if(overLeft > 0){
-      this.$wrap_inner.css('left', -overLeft);
+      this.$wrap_inner.css('left', -overLeft/retinaRa);
     }
   },
   /*
@@ -120,13 +137,13 @@ LyricCanvas.prototype = {
   * 调整画板的显示宽度
   * */
   resize: function (config) {
-    this.config.width = config.width || this.config.width;
-    this.config.height = config.height || this.config.height;
+    this.config.width = config.width * retinaRa || this.config.width;
+    this.config.height = config.height * retinaRa || this.config.height;
     this.resizeCanvas();
   },
   resizeCanvas: function () {
-    this.$wrap.width(this.config.width);
-    this.$wrap_inner.height(this.config.height);
+    this.$wrap.width(this.config.width/retinaRa);
+    this.$wrap_inner.height(this.config.height/retinaRa);
   },
   /*
    * func isNeedRePaint
@@ -210,10 +227,10 @@ LyricCanvas.prototype = {
       this.resizeCanvas();
       $(cf.view).append(this.$wrap);
     }
-    this.$wrap_inner.append(
-      "<canvas class='"+className+"' height='"+cf.height+"px' width='"+canvasCss.width+"px'></canvas>"
-    );
-    return this.$wrap_inner.find('.'+className).css(canvasCss);
+    var $e = $("<canvas class='"+className+"' height='"+cf.height+"px' width='"+(canvasCss.width * retinaRa)+"px'></canvas>");
+    $e.css(canvasCss).height(cf.height/retinaRa);
+    this.$wrap_inner.append($e);
+    return $e;
   },
   /*
    * 渲染歌词
