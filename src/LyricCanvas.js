@@ -160,8 +160,8 @@ LyricCanvas.prototype = {
    * @desc 清理画板方法
    * */
   _clearRect: function () {
-    this.context_txt.clearRect(0, 0, staticCss.canvas.width, this.config.height);
-    this.context_run.clearRect(0, 0, staticCss.canvas.width, this.config.height);
+    this.context_txt.clearRect(0, 0, staticCss.canvas.width * retinaRa, this.config.height);
+    this.context_run.clearRect(0, 0, staticCss.canvas.width * retinaRa, this.config.height);
   },
   /*
    * func _drawTxt
