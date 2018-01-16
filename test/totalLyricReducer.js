@@ -11,12 +11,19 @@
       return splits[splits.length-1];
     }
   }
+  function getTotal (songData) {
+    // [total:]
+    var fileName = songData.match(/\[total:([^\[]+)\]/);
+    if(fileName){
+      var splits = fileName[1].split('-');
+      return splits[splits.length-1];
+    }
+  }
   window.totalLyricReducer = function (songData, startPos) {
-    var rows = splitLyric(songData);
-    var songName = getSongName(songData);
     return {
-      songName: songName,
-      rows: rows,
+      songName: getSongName(songData),
+      total: getTotal(songData),
+      rows: splitLyric(songData),
       position: startPos // 测试模式下的开始位置后移10ms
     };
   }
