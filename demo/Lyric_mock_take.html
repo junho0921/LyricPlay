@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>LyricPlay</title>
+	<script>function __inline () {return null;}</script>
+</head>
+<body style="; height: 2000px;">
+<div class="c"></div>
+<label>
+	<h1>选择歌词文件</h1>
+	<input type="file"  id='innn'>
+</label>
+
+<!--先, 加载依赖的jquery-->
+<script src="http://libs.baidu.com/jquery/1.9.1/jquery.min.js"></script>
+<!--后, 加载canvas飞屏模块-->
+<script src="../test/mock.js"></script>
+<script src="../test/totalLyricReducer.js"></script>
+<script src="../src/LyricReducer.js"></script>
+<script src="../src/LyricCanvas.js"></script>
+<script src="../src/GapHandler.js"></script>
+<script src="../src/LyricPlay.js"></script>
+<!--解码库-->
+<script src="../node_modules/pako/dist/pako.js"></script>
+<!--解码-->
+<script src="../_secret/decode.js"></script>
+
+<!--使用示范-->
+<script>
+  // 步骤1(必须): 先创建一个实例
+  var lp = new LyricPlay({
+    canvas:{
+      view: '.c',
+//      width: 100,
+//      rows: 7,
+    },
+  });
+
+  $('#innn').on('change', function () {
+    var reader = new FileReader();
+    reader.onload = function () {
+      lp.render(
+        window.totalLyricReducer(decodeLyric(this.result), 1000)
+      );
+    };
+    reader.readAsDataURL($(this)[0].files[0]);
+  });
+</script>
+
+</body>
+</html>
