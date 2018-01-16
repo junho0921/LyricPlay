@@ -1,8 +1,8 @@
 /**
  * Created by jun.ho on 2017/11/26.
  */
-// 适应retina屏幕的分辨率, 扩大画板的倍数
-var retinaRa = 2;
+// 适应设备像素比
+var dpr = window.devicePixelRatio || 1;
 // 固定配置
 var staticCss = {
   wrap_outer: {
@@ -58,7 +58,7 @@ function LyricCanvas(config){
   this.config.height = this.config.height || (this.config.lineHeight * this.config.rows) || defaultHeight;
   // 计算行数
   this.config.rows = this.config.rows || Math.floor(this.config.height / this.config.lineHeight) || defaultRows;
-  // 修正尺寸, 适应retina屏幕的分辨率
+  // 修正尺寸, 适应设备像素比
   this._fixSize();
   // 创建缓存, 用于优化重复渲染
   this.memo = {runningIndex:0, currentWith:0, lyrics:[]};
@@ -77,15 +77,15 @@ LyricCanvas.prototype = {
   },
   /*
   * func _fixSize
-  * @desc 修正尺寸, 适应retina屏幕的分辨率
+  * @desc 修正尺寸, 适应设备像素比
   * */
   _fixSize: function () {
-    this.config.fontSize = this.config.fontSize * retinaRa;
-    this.config.shadowBlur = this.config.shadowBlur * retinaRa;
-    this.config.lineHeight = this.config.lineHeight * retinaRa;
-    this.config.height = this.config.height * retinaRa;
-    this.config.width = this.config.width * retinaRa;
-    this.config.paddingRight = this.config.paddingRight * retinaRa;
+    this.config.fontSize = this.config.fontSize * dpr;
+    this.config.shadowBlur = this.config.shadowBlur * dpr;
+    this.config.lineHeight = this.config.lineHeight * dpr;
+    this.config.height = this.config.height * dpr;
+    this.config.width = this.config.width * dpr;
+    this.config.paddingRight = this.config.paddingRight * dpr;
   },
   /*
    * func _calcWordWidth
@@ -103,7 +103,7 @@ LyricCanvas.prototype = {
   _adjustCanvasPos: function (currentWith) {
     var overLeft = currentWith + this.config.paddingRight - this.config.width;
     if(overLeft > 0){
-      this.$wrap_inner.css('left', -overLeft/retinaRa);
+      this.$wrap_inner.css('left', -overLeft/dpr);
     }
   },
   /*
@@ -137,13 +137,13 @@ LyricCanvas.prototype = {
   * 调整画板的显示宽度
   * */
   resize: function (config) {
-    this.config.width = config.width * retinaRa || this.config.width;
-    this.config.height = config.height * retinaRa || this.config.height;
+    this.config.width = config.width * dpr || this.config.width;
+    this.config.height = config.height * dpr || this.config.height;
     this.resizeCanvas();
   },
   resizeCanvas: function () {
-    this.$wrap.width(this.config.width/retinaRa);
-    this.$wrap_inner.height(this.config.height/retinaRa);
+    this.$wrap.width(this.config.width/dpr);
+    this.$wrap_inner.height(this.config.height/dpr);
   },
   /*
    * func isNeedRePaint
@@ -160,8 +160,8 @@ LyricCanvas.prototype = {
    * @desc 清理画板方法
    * */
   _clearRect: function () {
-    this.context_txt.clearRect(0, 0, staticCss.canvas.width * retinaRa, this.config.height);
-    this.context_run.clearRect(0, 0, staticCss.canvas.width * retinaRa, this.config.height);
+    this.context_txt.clearRect(0, 0, staticCss.canvas.width * dpr, this.config.height);
+    this.context_run.clearRect(0, 0, staticCss.canvas.width * dpr, this.config.height);
   },
   /*
    * func _drawTxt
@@ -227,8 +227,8 @@ LyricCanvas.prototype = {
       this.resizeCanvas();
       $(cf.view).append(this.$wrap);
     }
-    var $e = $("<canvas class='"+className+"' height='"+cf.height+"px' width='"+(canvasCss.width * retinaRa)+"px'></canvas>");
-    $e.css(canvasCss).height(cf.height/retinaRa);
+    var $e = $("<canvas class='"+className+"' height='"+cf.height+"px' width='"+(canvasCss.width * dpr)+"px'></canvas>");
+    $e.css(canvasCss).height(cf.height/dpr);
     this.$wrap_inner.append($e);
     return $e;
   },
