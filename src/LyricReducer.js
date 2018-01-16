@@ -65,6 +65,7 @@ function lyricReducer(result) {
     song = {
       position: +result.position,
       name: result.songName,
+      total: +result.total || 4 * 60 * 1000, // 默认歌曲播放时长为4分钟
       singer: result.singerName,
       rows: {}
     };

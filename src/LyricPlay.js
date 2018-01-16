@@ -244,6 +244,11 @@
           }
         }else{
           var nextRow = this.song.rows[memo.currentRowIndex+1];
+          var rowRemainTime = row.startPoint + row.duration - currentPos;
+          if(rowRemainTime > 0 && nextRow){
+            // [状态"waitRowEnd"] : 没有到本句结束, 等待显示' + rowRemainTime);
+            return {wait: rowRemainTime, width: onShowWord.right};
+          }
           if(nextRow){
             var waitTime = nextRow.startPoint - currentPos;
             // 没有下一字, 但有下一句' , waitTime);
@@ -262,7 +267,7 @@
             }
           }else{
             // [状态"end"] : 没有下一字也没有下一句, 结束');
-            return {isEnd: true, wait: this.config.remainTime + wordRemainTime, width: onShowWord.right};
+            return {isEnd: true, wait: this.song.total - currentPos, width: onShowWord.right};
           }
         }
       }

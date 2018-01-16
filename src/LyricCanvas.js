@@ -14,7 +14,7 @@ var staticCss = {
   },
   canvas:{
     position: 'absolute',
-    width: 500,
+    width: 600,
     top: 0,
     left: 0
   },
