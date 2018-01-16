@@ -66,18 +66,16 @@ function lyricReducer(result) {
       position: +result.position,
       name: result.songName,
       total: +result.total || 4 * 60 * 1000, // 默认歌曲播放时长为4分钟
-      singer: result.singerName,
+      singer: result.singer || result.singerName,
       rows: {}
     };
-  try{
-    // 遍历歌句数据处理
-    $.each(result.rows, function (_rowIndex, _rd) {
-      if(!isNaN(_rowIndex) && _rd) {
-        // 缓存每句歌词数据
-        song.rows[_rowIndex] = filterRowData(_rd);
-      }
-    });
-  }catch(e){}
+  // 遍历歌句数据处理
+  $.each(result.rows, function (_rowIndex, _rd) {
+    if(!isNaN(_rowIndex) && _rd) {
+      // 缓存每句歌词数据
+      song.rows[_rowIndex] = filterRowData(_rd);
+    }
+  });
   // 或是有歌句信息, 那么, 根据播放位置来获取当前句与当前字
   if(!$.isEmptyObject(song.rows) && getCurrentRowWord(song)){
     return song;
