@@ -179,6 +179,12 @@
     * func getProgress
     * @desc 获取当前进度长度
     * @param {number} [currentPos] 当前的播放进度
+    * todo 优化：改递归为for循环
+    * 1，参考音高线pitchReducer.getRange来实现获取；（原理：基于时间顺延的遍历以缓存index来快速遍历）
+    * 2，有两层遍历：行与字；通过index值下标来获取；
+    * 3，难点：句与句之间的空隙，字与字之间的空隙：这两种情况在遍历的时候如何识别
+    * 4，要求：必须要返回当前的状态：等待 / 播放中
+    * 5，优化：字与字之间的等待不需要setTimeout
     * */
     getProgress: function (currentPos) {
       // 若递归的数量超过了限制, 报错, 并且终止显示歌词播放
